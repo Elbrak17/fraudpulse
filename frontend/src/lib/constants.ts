@@ -1,0 +1,18 @@
+/* API Configuration */
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws/transactions";
+
+/* Risk level colors */
+export const RISK_COLORS: Record<string, string> = {
+    CRITICAL: "#ef4444",
+    HIGH: "#f97316",
+    MEDIUM: "#f59e0b",
+    LOW: "#10b981",
+};
+
+export const RISK_BG_CLASSES: Record<string, string> = {
+    CRITICAL: "risk-critical",
+    HIGH: "risk-high",
+    MEDIUM: "risk-medium",
+    LOW: "risk-low",
+};

@@ -1,0 +1,215 @@
+"use client";
+
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion } from "framer-motion";
+import StatsCards from "@/components/StatsCards";
+import TransactionFeed from "@/components/TransactionFeed";
+import ShapWaterfall from "@/components/ShapWaterfall";
+import AlertPanel from "@/components/AlertPanel";
+import TimelineChart from "@/components/TimelineChart";
+import RiskDistribution from "@/components/RiskDistribution";
+import { useTransactionStream } from "@/hooks/useTransactionStream";
+import {
+  fetchStats,
+  fetchPrediction,
+  fetchShap,
+  Stats,
+  StreamTransaction,
+  ShapValue,
+} from "@/lib/api";
+
+export default function DashboardPage() {
+  const [baselineStats, setBaselineStats] = useState<Stats | null>(null);
+  const { transactions, connectionMode } = useTransactionStream(50);
+
+  // Selected transaction state
+  const [selectedTx, setSelectedTx] = useState<StreamTransaction | null>(null);
+  const [selectedPrediction, setSelectedPrediction] = useState<{
+    if_score: number;
+    ae_reconstruction_error: number;
+    combined_confidence: number;
+    risk_level: string;
+    recommendation: string;
+  } | null>(null);
+  const [shapValues, setShapValues] = useState<ShapValue[] | null>(null);
+  const [shapBase, setShapBase] = useState(0);
+  const [shapLoading, setShapLoading] = useState(false);
+
+  // Fetch baseline stats from dataset on mount
+  useEffect(() => {
+    fetchStats()
+      .then(setBaselineStats)
+      .catch((e) => console.error("Stats error:", e));
+  }, []);
+
+  // Compute live stats: blend baseline dataset stats + live stream data
+  const liveStats = useMemo<Stats | null>(() => {
+    if (!baselineStats) return null;
+
+    const liveTotal = transactions.length;
+    const liveFlagged = transactions.filter(
+      (t) => t.risk_level === "CRITICAL" || t.risk_level === "HIGH"
+    ).length;
+    const liveBlockedAmount = transactions
+      .filter((t) => t.recommendation === "BLOCK")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const liveAvgRisk =
+      liveTotal > 0
+        ? transactions.reduce((sum, t) => sum + t.combined_confidence, 0) / liveTotal
+        : baselineStats.avg_risk_score;
+
+    return {
+      total_transactions: baselineStats.total_transactions + liveTotal,
+      flagged_transactions: baselineStats.flagged_transactions + liveFlagged,
+      fraud_rate:
+        liveTotal > 0
+          ? (baselineStats.flagged_transactions + liveFlagged) /
+          (baselineStats.total_transactions + liveTotal)
+          : baselineStats.fraud_rate,
+      model_accuracy: baselineStats.model_accuracy,
+      blocked_amount: baselineStats.blocked_amount + liveBlockedAmount,
+      avg_risk_score: liveAvgRisk,
+    };
+  }, [baselineStats, transactions]);
+
+  // Handle transaction selection
+  const handleSelectTransaction = useCallback(
+    async (tx: StreamTransaction) => {
+      setSelectedTx(tx);
+      setShapLoading(true);
+      setShapValues(null);
+      setSelectedPrediction(null);
+
+      try {
+        const [pred, shap] = await Promise.all([
+          fetchPrediction(tx.id),
+          fetchShap(tx.id),
+        ]);
+        setSelectedPrediction({
+          if_score: pred.if_score,
+          ae_reconstruction_error: pred.ae_reconstruction_error,
+          combined_confidence: pred.combined_confidence,
+          risk_level: pred.risk_level,
+          recommendation: pred.recommendation,
+        });
+        setShapValues(shap.shap_values);
+        setShapBase(shap.base_value);
+      } catch (e) {
+        console.error("Prediction/SHAP error:", e);
+      } finally {
+        setShapLoading(false);
+      }
+    },
+    []
+  );
+
+  return (
+    <div className="min-h-screen p-4 lg:p-6">
+      {/* ── Header ─────────────────────────────────────────── */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between mb-6"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl gradient-danger flex items-center justify-center text-xl font-bold">
+            🛡️
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
+              FraudPulse
+            </h1>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              AI-Powered Fraud Detection Dashboard
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2 glass-card px-3 py-1.5 rounded-full">
+            <span className="text-xs text-[var(--color-text-muted)]">Models:</span>
+            <span className="text-xs font-medium text-emerald-400">IF + AE</span>
+            <span className="text-[var(--color-text-muted)]">|</span>
+            <span className="text-xs font-medium text-blue-400">Gemini 3</span>
+          </div>
+          <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full">
+            <span
+              className={`w-2 h-2 rounded-full pulse-dot ${connectionMode === "ws"
+                  ? "bg-emerald-400"
+                  : connectionMode === "poll"
+                    ? "bg-amber-400"
+                    : "bg-gray-400"
+                }`}
+            />
+            <span className="text-xs text-[var(--color-text-secondary)]">
+              {connectionMode === "ws"
+                ? "Live"
+                : connectionMode === "poll"
+                  ? "Polling"
+                  : "..."}
+            </span>
+          </div>
+        </div>
+      </motion.header>
+
+      {/* ── Stats Row (live-updating) ──────────────────────── */}
+      <StatsCards stats={liveStats} />
+
+      {/* ── Main Grid ──────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
+        {/* Left Column — Transaction Feed */}
+        <div className="lg:col-span-3 h-[600px]">
+          <TransactionFeed
+            transactions={transactions}
+            connectionMode={connectionMode}
+            onSelect={handleSelectTransaction}
+            selectedId={selectedTx?.id ?? null}
+          />
+        </div>
+
+        {/* Center Column — Charts */}
+        <div className="lg:col-span-5 space-y-4">
+          <ShapWaterfall
+            shapValues={shapValues}
+            baseValue={shapBase}
+            loading={shapLoading}
+          />
+          <TimelineChart transactions={transactions} />
+        </div>
+
+        {/* Right Column — Alert Panel + Risk Distribution */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="h-[400px]">
+            <AlertPanel
+              transactionId={selectedTx?.id ?? null}
+              riskLevel={
+                selectedPrediction?.risk_level ?? selectedTx?.risk_level ?? null
+              }
+              ifScore={selectedPrediction?.if_score ?? null}
+              aeScore={
+                selectedPrediction?.ae_reconstruction_error ?? null
+              }
+              recommendation={
+                selectedPrediction?.recommendation ??
+                selectedTx?.recommendation ??
+                null
+              }
+              confidence={
+                selectedPrediction?.combined_confidence ??
+                selectedTx?.combined_confidence ??
+                null
+              }
+            />
+          </div>
+          <RiskDistribution transactions={transactions} />
+        </div>
+      </div>
+
+      {/* ── Footer ─────────────────────────────────────────── */}
+      <footer className="mt-6 text-center text-xs text-[var(--color-text-muted)] py-4 border-t border-white/5">
+        FraudPulse — Built for DevDash 2026 • Powered by Isolation Forest +
+        Autoencoder + SHAP + Gemini 3 Flash Preview
+      </footer>
+    </div>
+  );
+}

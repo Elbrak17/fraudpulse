@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# NodeJS
+node_modules/
+.next/
+dist/
+out/
+build/
+.DS_Store
+coverage/
+
+# IDEs
+.vscode/
+.idea/
+backend/data/creditcard.csv
