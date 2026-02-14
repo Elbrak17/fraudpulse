@@ -35,7 +35,35 @@ cached_stats: dict = None
 # Maximum rows to keep in memory (saves RAM on constrained servers)
 MAX_ROWS = 20000
 
-DATA_PATH = Path(__file__).parent / "data" / "creditcard.csv.gz"
+DATA_DIR = Path(__file__).parent / "data"
+DATA_GZ = DATA_DIR / "creditcard.csv.gz"
+DATA_CSV = DATA_DIR / "creditcard.csv"
+
+
+def _find_dataset() -> Path | None:
+    """Find the dataset file, downloading from DATASET_URL if needed."""
+    import os
+
+    if DATA_GZ.exists():
+        return DATA_GZ
+    if DATA_CSV.exists():
+        return DATA_CSV
+
+    # Try downloading from DATASET_URL env variable
+    dataset_url = os.environ.get("DATASET_URL")
+    if dataset_url:
+        import urllib.request
+        print(f"[*] Downloading dataset from {dataset_url}...")
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        target = DATA_GZ if dataset_url.endswith(".gz") else DATA_CSV
+        try:
+            urllib.request.urlretrieve(dataset_url, str(target))
+            print(f"[*] Downloaded to {target}")
+            return target
+        except Exception as e:
+            print(f"[!] Download failed: {e}")
+
+    return None
 
 
 @asynccontextmanager
@@ -46,15 +74,16 @@ async def lifespan(app: FastAPI):
     print("[*] FraudPulse starting up...")
 
     # Load dataset (sampled to save memory)
-    if not DATA_PATH.exists():
-        print(f"[!] Dataset not found at {DATA_PATH}")
-        print("    Download from: https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud")
-        print("    Place creditcard.csv.gz in the data/ directory")
+    data_path = _find_dataset()
+    if data_path is None:
+        print("[!] Dataset not found.")
+        print("    Set DATASET_URL env var or place creditcard.csv(.gz) in data/")
     else:
         try:
             from sklearn.preprocessing import StandardScaler
 
-            full_df = pd.read_csv(DATA_PATH, compression="gzip")
+            compression = "gzip" if str(data_path).endswith(".gz") else None
+            full_df = pd.read_csv(data_path, compression=compression)
             total_rows = len(full_df)
 
             # Keep ALL fraud rows + sample of legit rows to stay within memory

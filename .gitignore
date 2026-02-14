@@ -18,3 +18,5 @@ coverage/
 .vscode/
 .idea/
 backend/data/creditcard.csv
+backend/data/creditcard.csv
+backend/data/creditcard.csv.gz
