@@ -79,8 +79,9 @@ pip install -r requirements.txt
 # Download dataset
 # Get creditcard.csv from https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
 # Place it in fraudpulse/backend/data/creditcard.csv
+# (For deployment, the dataset is downloaded automatically via DATASET_URL env var)
 
-# (Optional) Set Gemini API key
+# Set environment variables
 cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
 

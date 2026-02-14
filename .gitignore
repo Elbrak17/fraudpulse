@@ -17,6 +17,6 @@ coverage/
 # IDEs
 .vscode/
 .idea/
-backend/data/creditcard.csv
+# Dataset (hosted on GitHub Releases, not in repo)
 backend/data/creditcard.csv
 backend/data/creditcard.csv.gz
