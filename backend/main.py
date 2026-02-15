@@ -29,7 +29,6 @@ explainer: ShapExplainer = None
 streamer: TransactionStreamer = None
 df: pd.DataFrame = None
 feature_cols: list[str] = []
-cached_stats: dict = None
 
 # Maximum rows to keep in memory (saves RAM on Railway)
 MAX_ROWS = 20000
@@ -135,47 +134,12 @@ async def health():
 
 @app.get("/api/stats", response_model=StatsOut)
 async def get_stats():
-    """Get aggregate dashboard statistics (cached after first call)."""
-    global cached_stats
+    """Get live-accumulated dashboard statistics from the streamer."""
+    if streamer is None:
+        raise HTTPException(503, "Streamer not ready")
 
-    if df is None:
-        raise HTTPException(503, "Dataset not loaded")
-
-    # Return cached stats to avoid re-computing 1000 predictions each time
-    if cached_stats is not None:
-        return cached_stats
-
-    total = len(df)
-    fraud_count = int(df["Class"].sum())
-    fraud_rate = fraud_count / total
-
-    # Use a smaller sample to reduce CPU/memory pressure
-    sample_size = min(200, total)
-    sample = df.sample(n=sample_size, random_state=42)
-    correct = 0
-    total_flagged_amount = 0.0
-    risk_scores = []
-
-    for _, row in sample.iterrows():
-        features = row[feature_cols].values.astype(np.float64)
-        pred = predictor.predict(features)
-        predicted_fraud = 1 if pred["risk_level"] in ("HIGH", "CRITICAL") else 0
-        actual = int(row["Class"])
-        if predicted_fraud == actual:
-            correct += 1
-        if predicted_fraud == 1:
-            total_flagged_amount += abs(float(row["Amount"]))
-        risk_scores.append(pred["combined_confidence"])
-
-    cached_stats = StatsOut(
-        total_transactions=total,
-        flagged_transactions=fraud_count,
-        fraud_rate=round(fraud_rate, 6),
-        model_accuracy=round(correct / sample_size, 4),
-        blocked_amount=round(total_flagged_amount * (total / sample_size), 2),
-        avg_risk_score=round(float(np.mean(risk_scores)), 4),
-    )
-    return cached_stats
+    live = streamer.get_live_stats()
+    return StatsOut(**live)
 
 
 # ── Transactions ──────────────────────────────────────────────

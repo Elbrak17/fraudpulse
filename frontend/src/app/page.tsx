@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import StatsCards from "@/components/StatsCards";
 import TransactionFeed from "@/components/TransactionFeed";
@@ -19,7 +19,7 @@ import {
 } from "@/lib/api";
 
 export default function DashboardPage() {
-  const [baselineStats, setBaselineStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const { transactions, connectionMode } = useTransactionStream(50);
 
   // Selected transaction state
@@ -35,42 +35,17 @@ export default function DashboardPage() {
   const [shapBase, setShapBase] = useState(0);
   const [shapLoading, setShapLoading] = useState(false);
 
-  // Fetch baseline stats from dataset on mount
+  // Poll live stats every 3 seconds (stats grow as streamer processes txs)
   useEffect(() => {
-    fetchStats()
-      .then(setBaselineStats)
-      .catch((e) => console.error("Stats error:", e));
-  }, []);
-
-  // Compute live stats: blend baseline dataset stats + live stream data
-  const liveStats = useMemo<Stats | null>(() => {
-    if (!baselineStats) return null;
-
-    const liveTotal = transactions.length;
-    const liveFlagged = transactions.filter(
-      (t) => t.risk_level === "CRITICAL" || t.risk_level === "HIGH"
-    ).length;
-    const liveBlockedAmount = transactions
-      .filter((t) => t.recommendation === "BLOCK")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const liveAvgRisk =
-      liveTotal > 0
-        ? transactions.reduce((sum, t) => sum + t.combined_confidence, 0) / liveTotal
-        : baselineStats.avg_risk_score;
-
-    return {
-      total_transactions: baselineStats.total_transactions + liveTotal,
-      flagged_transactions: baselineStats.flagged_transactions + liveFlagged,
-      fraud_rate:
-        liveTotal > 0
-          ? (baselineStats.flagged_transactions + liveFlagged) /
-          (baselineStats.total_transactions + liveTotal)
-          : baselineStats.fraud_rate,
-      model_accuracy: baselineStats.model_accuracy,
-      blocked_amount: baselineStats.blocked_amount + liveBlockedAmount,
-      avg_risk_score: liveAvgRisk,
+    const poll = () => {
+      fetchStats()
+        .then(setStats)
+        .catch((e) => console.error("Stats error:", e));
     };
-  }, [baselineStats, transactions]);
+    poll(); // initial fetch
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle transaction selection
   const handleSelectTransaction = useCallback(
@@ -135,10 +110,10 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full">
             <span
               className={`w-2 h-2 rounded-full pulse-dot ${connectionMode === "ws"
-                  ? "bg-emerald-400"
-                  : connectionMode === "poll"
-                    ? "bg-amber-400"
-                    : "bg-gray-400"
+                ? "bg-emerald-400"
+                : connectionMode === "poll"
+                  ? "bg-amber-400"
+                  : "bg-gray-400"
                 }`}
             />
             <span className="text-xs text-[var(--color-text-secondary)]">
@@ -153,7 +128,7 @@ export default function DashboardPage() {
       </motion.header>
 
       {/* ── Stats Row (live-updating) ──────────────────────── */}
-      <StatsCards stats={liveStats} />
+      <StatsCards stats={stats} />
 
       {/* ── Main Grid ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">

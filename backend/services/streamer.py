@@ -2,6 +2,7 @@
 Transaction Streamer Service.
 Simulates real-time transaction feed by cycling through the dataset.
 Supports WebSocket and HTTP polling.
+Tracks live stats as transactions are processed.
 """
 
 import asyncio
@@ -22,6 +23,13 @@ class TransactionStreamer:
         self.buffer: list[dict] = []
         self.max_buffer = 100
         self._running = False
+
+        # ── Live stats accumulators ──
+        self.total_processed = 0
+        self.fraud_flagged = 0
+        self.blocked_amount = 0.0
+        self.correct_predictions = 0
+        self._risk_score_sum = 0.0
 
         # Create an index array instead of copying the whole DataFrame
         # Mix: boost fraud rows for demo impact (~5% fraud rate)
@@ -60,12 +68,49 @@ class TransactionStreamer:
 
         self.current_index += 1
 
+        # ── Accumulate live stats ──
+        self.total_processed += 1
+        self._risk_score_sum += prediction["combined_confidence"]
+
+        is_flagged = prediction["risk_level"] in ("HIGH", "CRITICAL")
+        if is_flagged:
+            self.fraud_flagged += 1
+        if prediction["recommendation"] == "BLOCK":
+            self.blocked_amount += abs(float(row.get("Amount", 0)))
+
+        # Check prediction correctness
+        predicted_fraud = 1 if is_flagged else 0
+        actual = int(row["Class"])
+        if predicted_fraud == actual:
+            self.correct_predictions += 1
+
         # Add to buffer for polling clients
         self.buffer.append(tx)
         if len(self.buffer) > self.max_buffer:
             self.buffer = self.buffer[-self.max_buffer:]
 
         return tx
+
+    def get_live_stats(self) -> dict:
+        """Return accumulated live stats from processed transactions."""
+        total = self.total_processed
+        if total == 0:
+            return {
+                "total_transactions": 0,
+                "flagged_transactions": 0,
+                "fraud_rate": 0.0,
+                "model_accuracy": 0.0,
+                "blocked_amount": 0.0,
+                "avg_risk_score": 0.0,
+            }
+        return {
+            "total_transactions": total,
+            "flagged_transactions": self.fraud_flagged,
+            "fraud_rate": round(self.fraud_flagged / total, 6),
+            "model_accuracy": round(self.correct_predictions / total, 4),
+            "blocked_amount": round(self.blocked_amount, 2),
+            "avg_risk_score": round(self._risk_score_sum / total, 4),
+        }
 
     def get_buffered(self, since_id: int = 0, limit: int = 20) -> list[dict]:
         """Get buffered transactions for HTTP polling fallback."""
