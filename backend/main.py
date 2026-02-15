@@ -31,7 +31,12 @@ df: pd.DataFrame = None
 feature_cols: list[str] = []
 cached_stats: dict = None
 
-DATA_PATH = Path(__file__).parent / "data" / "creditcard_sample.csv"
+# Maximum rows to keep in memory (saves RAM on Railway)
+MAX_ROWS = 20000
+
+DATA_DIR = Path(__file__).parent / "data"
+DATA_GZ = DATA_DIR / "creditcard.csv.gz"
+DATA_SAMPLE = DATA_DIR / "creditcard_sample.csv"
 
 
 @asynccontextmanager
@@ -41,20 +46,39 @@ async def lifespan(app: FastAPI):
 
     print("[*] FraudPulse starting up...")
 
-    # Load dataset
-    if not DATA_PATH.exists():
-        print(f"[!] Dataset not found at {DATA_PATH}")
+    # Load dataset — prefer full gzip, fallback to sample
+    data_path = DATA_GZ if DATA_GZ.exists() else DATA_SAMPLE if DATA_SAMPLE.exists() else None
+
+    if data_path is None:
+        print("[!] No dataset found in data/")
     else:
         try:
+            import gc
             from sklearn.preprocessing import StandardScaler
 
-            df = pd.read_csv(DATA_PATH)
+            compression = "gzip" if str(data_path).endswith(".gz") else None
+            full_df = pd.read_csv(data_path, compression=compression)
+            total_rows = len(full_df)
+
+            # Sample to stay within memory limits if dataset is large
+            if total_rows > MAX_ROWS:
+                fraud_df = full_df[full_df["Class"] == 1]
+                legit_df = full_df[full_df["Class"] == 0]
+                legit_sample = legit_df.sample(
+                    n=min(MAX_ROWS - len(fraud_df), len(legit_df)),
+                    random_state=42,
+                )
+                df = pd.concat([legit_sample, fraud_df]).sample(frac=1, random_state=42).reset_index(drop=True)
+                del full_df, fraud_df, legit_df, legit_sample
+                gc.collect()
+            else:
+                df = full_df
 
             scaler = StandardScaler()
             df["Amount"] = scaler.fit_transform(df[["Amount"]])
             df["Time"] = scaler.fit_transform(df[["Time"]])
             feature_cols = [c for c in df.columns if c != "Class"]
-            print(f"[*] Dataset loaded: {len(df)} transactions")
+            print(f"[*] Dataset loaded: {len(df)} rows (from {total_rows} total)")
         except Exception as e:
             print(f"[!] Failed to load dataset: {e}")
             df = None
