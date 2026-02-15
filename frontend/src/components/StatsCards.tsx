@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface StatCardProps {
     title: string;
@@ -13,17 +13,31 @@ interface StatCardProps {
 }
 
 function AnimatedValue({ target, format }: { target: number; format: string }) {
-    const [current, setCurrent] = useState(0);
+    const [current, setCurrent] = useState(target);
+    const prevRef = useRef(target);
 
     useEffect(() => {
-        const duration = 1500;
-        const steps = 60;
-        const increment = target / steps;
+        const prev = prevRef.current;
+        prevRef.current = target;
+
+        // If the value went down (reset), snap instantly
+        if (target < prev) {
+            setCurrent(target);
+            return;
+        }
+
+        // Animate from previous value to new target
+        const diff = target - prev;
+        if (diff === 0) return;
+
+        const duration = 400; // ms — fast, smooth increment
+        const steps = 20;
+        const increment = diff / steps;
         let step = 0;
 
         const timer = setInterval(() => {
             step++;
-            setCurrent(Math.min(increment * step, target));
+            setCurrent(Math.min(prev + increment * step, target));
             if (step >= steps) clearInterval(timer);
         }, duration / steps);
 

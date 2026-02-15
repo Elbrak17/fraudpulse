@@ -3,6 +3,7 @@ Transaction Streamer Service.
 Simulates real-time transaction feed by cycling through the dataset.
 Supports WebSocket and HTTP polling.
 Tracks live stats as transactions are processed.
+Resets all counters when the full cycle completes.
 """
 
 import asyncio
@@ -31,25 +32,35 @@ class TransactionStreamer:
         self.correct_predictions = 0
         self._risk_score_sum = 0.0
 
-        # Create an index array instead of copying the whole DataFrame
-        # Mix: boost fraud rows for demo impact (~5% fraud rate)
+        # Build demo pool: ALL rows with fraud boosted ×3 for visibility
         fraud_idx = df.index[df["Class"] == 1].tolist()
         legit_idx = df.index[df["Class"] == 0].tolist()
-        # Limit legit to keep memory low
+
+        # Use all legit + tripled fraud for ~5% visible fraud rate
+        demo_indices = legit_idx + fraud_idx * 3
         import random as _rnd
         _rnd.seed(42)
-        legit_sample = _rnd.sample(legit_idx, min(5000, len(legit_idx)))
-        # Triple the fraud indices for visibility
-        demo_indices = legit_sample + fraud_idx * 3
         _rnd.shuffle(demo_indices)
         self.demo_indices = demo_indices
         print(f"[*] Streamer initialized with {len(self.demo_indices)} transaction indices "
               f"({len(fraud_idx)*3} fraud boosted)")
 
+    def _reset_stats(self):
+        """Reset all live counters for a new cycle."""
+        self.total_processed = 0
+        self.fraud_flagged = 0
+        self.blocked_amount = 0.0
+        self.correct_predictions = 0
+        self._risk_score_sum = 0.0
+        self.buffer.clear()
+        print("[*] Streamer cycle complete — stats reset to 0")
+
     def get_next_transaction(self) -> dict:
         """Get the next transaction with prediction."""
+        # Reset everything when the full cycle completes
         if self.current_index >= len(self.demo_indices):
             self.current_index = 0
+            self._reset_stats()
 
         df_idx = self.demo_indices[self.current_index]
         row = self.df.iloc[df_idx]

@@ -36,9 +36,9 @@ Financial fraud costs the global economy **$32+ billion annually**. Traditional 
 │  • LLM Alert Panel  │                              │  │ PyTorch        │  │
 │  • Risk Trend       │                              │  │ Autoencoder    │  │
 │  • Risk Distribution│                              │  ├────────────────┤  │
-│  •                     │                              │  │ SHAP Explainer │  │
+│                     │                              │  │ SHAP Explainer │  │
 └─────────────────────┘                              │  ├────────────────┤  │
-                                                     │  │ Gemini 3.0     │  │
+                                                     │  │ Gemini 3       │  │
                                                      │  │ Flash LLM      │  │
                                                      │  └────────────────┘  │
                                                      └──────────────────────┘
