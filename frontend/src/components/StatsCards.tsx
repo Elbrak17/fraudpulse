@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
 
 interface StatCardProps {
     title: string;
@@ -13,45 +12,14 @@ interface StatCardProps {
 }
 
 function AnimatedValue({ target, format }: { target: number; format: string }) {
-    const [current, setCurrent] = useState(target);
-    const prevRef = useRef(target);
-
-    useEffect(() => {
-        const prev = prevRef.current;
-        prevRef.current = target;
-
-        // If the value went down (reset), snap instantly
-        if (target < prev) {
-            setCurrent(target);
-            return;
-        }
-
-        // Animate from previous value to new target
-        const diff = target - prev;
-        if (diff === 0) return;
-
-        const duration = 400; // ms — fast, smooth increment
-        const steps = 20;
-        const increment = diff / steps;
-        let step = 0;
-
-        const timer = setInterval(() => {
-            step++;
-            setCurrent(Math.min(prev + increment * step, target));
-            if (step >= steps) clearInterval(timer);
-        }, duration / steps);
-
-        return () => clearInterval(timer);
-    }, [target]);
-
     const formatted = (() => {
         switch (format) {
             case "percent":
-                return `${(current * 100).toFixed(1)}%`;
+                return `${(target * 100).toFixed(1)}%`;
             case "currency":
-                return `$${current.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+                return `$${target.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
             default:
-                return current.toLocaleString("en-US", { maximumFractionDigits: 0 });
+                return target.toLocaleString("en-US", { maximumFractionDigits: 0 });
         }
     })();
 
