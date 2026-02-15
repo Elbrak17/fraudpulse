@@ -93,6 +93,11 @@ app.add_middleware(
 
 # ── Health check ──────────────────────────────────────────────
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "FraudPulse API"}
+
+
 @app.get("/api/health")
 async def health():
     return {
