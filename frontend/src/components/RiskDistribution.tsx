@@ -6,6 +6,7 @@ import {
     Pie,
     Cell,
     ResponsiveContainer,
+    Label,
 } from "recharts";
 import { StreamTransaction } from "@/lib/api";
 import { useMemo } from "react";
@@ -21,7 +22,9 @@ const RISK_CONFIG = [
     { key: "LOW", color: "#10b981", label: "Low" },
 ];
 
-export default function RiskDistribution({ transactions }: RiskDistributionProps) {
+export default function RiskDistribution({
+    transactions,
+}: RiskDistributionProps) {
     const data = useMemo(() => {
         const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
         for (const tx of transactions) {
@@ -42,14 +45,15 @@ export default function RiskDistribution({ transactions }: RiskDistributionProps
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
             className="glass-card p-4"
         >
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wider mb-3">
+            <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em] mb-3">
                 Risk Distribution
             </h3>
 
             <div className="flex items-center gap-4">
-                <div className="w-32 h-32">
+                <div className="w-36 h-36 relative">
                     {data.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -57,15 +61,35 @@ export default function RiskDistribution({ transactions }: RiskDistributionProps
                                     data={data}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={35}
-                                    outerRadius={55}
-                                    paddingAngle={4}
+                                    innerRadius={38}
+                                    outerRadius={60}
+                                    paddingAngle={3}
                                     dataKey="value"
                                     strokeWidth={0}
+                                    animationBegin={0}
+                                    animationDuration={800}
                                 >
                                     {data.map((entry, idx) => (
-                                        <Cell key={idx} fill={entry.color} fillOpacity={0.85} />
+                                        <Cell
+                                            key={idx}
+                                            fill={entry.color}
+                                            fillOpacity={0.85}
+                                            style={{
+                                                filter: `drop-shadow(0 0 6px ${entry.color}40)`,
+                                            }}
+                                        />
                                     ))}
+                                    <Label
+                                        value={total.toString()}
+                                        position="center"
+                                        className="stat-number"
+                                        style={{
+                                            fontSize: "20px",
+                                            fontWeight: "700",
+                                            fill: "var(--color-text-primary)",
+                                            fontFamily: "var(--font-mono)",
+                                        }}
+                                    />
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
@@ -74,25 +98,47 @@ export default function RiskDistribution({ transactions }: RiskDistributionProps
                     )}
                 </div>
 
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 space-y-2.5">
                     {RISK_CONFIG.map((r) => {
-                        const count = transactions.filter((t) => t.risk_level === r.key).length;
-                        const pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0.0";
+                        const count = transactions.filter(
+                            (t) => t.risk_level === r.key
+                        ).length;
+                        const pct = total > 0 ? (count / total) * 100 : 0;
                         return (
-                            <div key={r.key} className="flex items-center gap-2">
-                                <div
-                                    className="w-3 h-3 rounded-sm flex-shrink-0"
-                                    style={{ backgroundColor: r.color }}
-                                />
-                                <span className="text-xs text-[var(--color-text-secondary)] flex-1">
-                                    {r.label}
-                                </span>
-                                <span className="text-xs font-mono text-[var(--color-text-primary)]">
-                                    {count}
-                                </span>
-                                <span className="text-xs text-[var(--color-text-muted)] w-12 text-right">
-                                    {pct}%
-                                </span>
+                            <div key={r.key} className="space-y-1">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                            style={{
+                                                backgroundColor: r.color,
+                                                boxShadow: `0 0 8px ${r.color}40`,
+                                            }}
+                                        />
+                                        <span className="text-[10px] text-[var(--color-text-secondary)] font-medium">
+                                            {r.label}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] stat-number text-[var(--color-text-primary)] font-bold">
+                                        {count}{" "}
+                                        <span className="text-[var(--color-text-muted)]">
+                                            ({pct.toFixed(1)}%)
+                                        </span>
+                                    </span>
+                                </div>
+                                {/* Progress bar */}
+                                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${pct}%` }}
+                                        transition={{ duration: 0.8, ease: "easeOut" }}
+                                        className="h-full rounded-full"
+                                        style={{
+                                            backgroundColor: r.color,
+                                            boxShadow: `0 0 8px ${r.color}30`,
+                                        }}
+                                    />
+                                </div>
                             </div>
                         );
                     })}

@@ -8,43 +8,57 @@ interface StatCardProps {
     format?: "number" | "percent" | "currency";
     icon: string;
     gradient: string;
+    glowClass: string;
     delay?: number;
 }
 
-function AnimatedValue({ target, format }: { target: number; format: string }) {
-    const formatted = (() => {
-        switch (format) {
-            case "percent":
-                return `${(target * 100).toFixed(1)}%`;
-            case "currency":
-                return `$${target.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-            default:
-                return target.toLocaleString("en-US", { maximumFractionDigits: 0 });
-        }
-    })();
-
-    return <span className="stat-number">{formatted}</span>;
+function formatValue(value: number, format: string) {
+    switch (format) {
+        case "percent":
+            return `${(value * 100).toFixed(1)}%`;
+        case "currency":
+            return `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+        default:
+            return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    }
 }
 
-function StatCard({ title, value, format = "number", icon, gradient, delay = 0 }: StatCardProps) {
+function StatCard({
+    title,
+    value,
+    format = "number",
+    icon,
+    gradient,
+    glowClass,
+    delay = 0,
+}: StatCardProps) {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay, duration: 0.5, ease: "easeOut" }}
-            className="glass-card p-5 relative overflow-hidden group"
+            className={`glass-card p-5 relative overflow-hidden group hover:${glowClass}`}
         >
             {/* Gradient accent bar */}
-            <div className={`absolute top-0 left-0 right-0 h-1 ${gradient}`} />
+            <div className={`absolute top-0 left-0 right-0 h-[2px] ${gradient}`} />
 
-            <div className="flex items-start justify-between">
+            {/* Subtle background glow */}
+            <div
+                className={`absolute -top-8 -right-8 w-24 h-24 rounded-full ${gradient} opacity-[0.04] blur-2xl group-hover:opacity-[0.08] transition-opacity duration-500`}
+            />
+
+            <div className="flex items-start justify-between relative">
                 <div>
-                    <p className="text-sm text-[var(--color-text-secondary)] mb-1">{title}</p>
+                    <p className="text-[10px] text-[var(--color-text-muted)] mb-2 uppercase tracking-[0.12em] font-medium">
+                        {title}
+                    </p>
                     <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                        <AnimatedValue target={value} format={format} />
+                        <span className="stat-number">{formatValue(value, format)}</span>
                     </p>
                 </div>
-                <div className="text-2xl opacity-60 group-hover:opacity-100 transition-opacity">
+                <div
+                    className={`w-10 h-10 rounded-xl ${gradient} flex items-center justify-center text-base shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300`}
+                >
                     {icon}
                 </div>
             </div>
@@ -68,7 +82,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
         return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="glass-card p-5 h-24 shimmer" />
+                    <div key={i} className="glass-card p-5 h-[88px] shimmer" />
                 ))}
             </div>
         );
@@ -77,18 +91,20 @@ export default function StatsCards({ stats }: StatsCardsProps) {
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-                title="Total Transactions"
+                title="Total Analyzed"
                 value={stats.total_transactions}
                 icon="📊"
                 gradient="gradient-blue"
+                glowClass="glow-blue"
                 delay={0}
             />
             <StatCard
-                title="Flagged as Fraud"
+                title="Flagged Fraud"
                 value={stats.flagged_transactions}
                 icon="🚨"
                 gradient="gradient-danger"
-                delay={0.1}
+                glowClass="glow-danger"
+                delay={0.07}
             />
             <StatCard
                 title="Model Accuracy"
@@ -96,7 +112,8 @@ export default function StatsCards({ stats }: StatsCardsProps) {
                 format="percent"
                 icon="🎯"
                 gradient="gradient-safe"
-                delay={0.2}
+                glowClass="glow-safe"
+                delay={0.14}
             />
             <StatCard
                 title="Amount Blocked"
@@ -104,7 +121,8 @@ export default function StatsCards({ stats }: StatsCardsProps) {
                 format="currency"
                 icon="🛡️"
                 gradient="gradient-purple"
-                delay={0.3}
+                glowClass="glow-purple"
+                delay={0.21}
             />
         </div>
     );
