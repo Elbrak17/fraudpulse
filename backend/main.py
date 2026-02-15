@@ -70,7 +70,6 @@ async def lifespan(app: FastAPI):
         print(f"[!] Failed to load models: {e}")
         print("    Run: python models/train.py first")
 
-    gc.collect()
     yield
 
     print("[*] FraudPulse shutting down...")
