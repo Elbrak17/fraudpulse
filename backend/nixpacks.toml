@@ -1,5 +1,2 @@
-[phases.dataset]
-cmds = ["mkdir -p data && curl -L -o data/creditcard.csv.gz ${DATASET_URL}"]
-
 [start]
 cmd = "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"

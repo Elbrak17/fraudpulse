@@ -3,7 +3,6 @@ FraudPulse Backend — FastAPI Application
 AI-Powered Transaction Fraud Detection Dashboard
 """
 
-import gc
 import json
 import asyncio
 import numpy as np
@@ -32,38 +31,7 @@ df: pd.DataFrame = None
 feature_cols: list[str] = []
 cached_stats: dict = None
 
-# Maximum rows to keep in memory (saves RAM on constrained servers)
-MAX_ROWS = 20000
-
-DATA_DIR = Path(__file__).parent / "data"
-DATA_GZ = DATA_DIR / "creditcard.csv.gz"
-DATA_CSV = DATA_DIR / "creditcard.csv"
-
-
-def _find_dataset() -> Path | None:
-    """Find the dataset file, downloading from DATASET_URL if needed."""
-    import os
-
-    if DATA_GZ.exists():
-        return DATA_GZ
-    if DATA_CSV.exists():
-        return DATA_CSV
-
-    # Try downloading from DATASET_URL env variable
-    dataset_url = os.environ.get("DATASET_URL")
-    if dataset_url:
-        import urllib.request
-        print(f"[*] Downloading dataset from {dataset_url}...")
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        target = DATA_GZ if dataset_url.endswith(".gz") else DATA_CSV
-        try:
-            urllib.request.urlretrieve(dataset_url, str(target))
-            print(f"[*] Downloaded to {target}")
-            return target
-        except Exception as e:
-            print(f"[!] Download failed: {e}")
-
-    return None
+DATA_PATH = Path(__file__).parent / "data" / "creditcard_sample.csv"
 
 
 @asynccontextmanager
@@ -73,37 +41,20 @@ async def lifespan(app: FastAPI):
 
     print("[*] FraudPulse starting up...")
 
-    # Load dataset (sampled to save memory)
-    data_path = _find_dataset()
-    if data_path is None:
-        print("[!] Dataset not found.")
-        print("    Set DATASET_URL env var or place creditcard.csv(.gz) in data/")
+    # Load dataset
+    if not DATA_PATH.exists():
+        print(f"[!] Dataset not found at {DATA_PATH}")
     else:
         try:
             from sklearn.preprocessing import StandardScaler
 
-            compression = "gzip" if str(data_path).endswith(".gz") else None
-            full_df = pd.read_csv(data_path, compression=compression)
-            total_rows = len(full_df)
-
-            # Keep ALL fraud rows + sample of legit rows to stay within memory
-            fraud_df = full_df[full_df["Class"] == 1]
-            legit_df = full_df[full_df["Class"] == 0]
-            legit_sample = legit_df.sample(
-                n=min(MAX_ROWS - len(fraud_df), len(legit_df)),
-                random_state=42,
-            )
-            df = pd.concat([legit_sample, fraud_df]).sample(frac=1, random_state=42).reset_index(drop=True)
-
-            # Free the full dataframe
-            del full_df, fraud_df, legit_df, legit_sample
-            gc.collect()
+            df = pd.read_csv(DATA_PATH)
 
             scaler = StandardScaler()
             df["Amount"] = scaler.fit_transform(df[["Amount"]])
             df["Time"] = scaler.fit_transform(df[["Time"]])
             feature_cols = [c for c in df.columns if c != "Class"]
-            print(f"[*] Dataset loaded: {len(df)} rows sampled from {total_rows} (saving memory)")
+            print(f"[*] Dataset loaded: {len(df)} transactions")
         except Exception as e:
             print(f"[!] Failed to load dataset: {e}")
             df = None
