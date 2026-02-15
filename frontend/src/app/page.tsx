@@ -171,18 +171,18 @@ export default function DashboardPage() {
             <span className="relative flex h-2.5 w-2.5">
               <span
                 className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${connectionMode === "ws"
-                    ? "bg-emerald-400 animate-ping"
-                    : connectionMode === "poll"
-                      ? "bg-amber-400"
-                      : "bg-gray-400"
+                  ? "bg-emerald-400 animate-ping"
+                  : connectionMode === "poll"
+                    ? "bg-amber-400"
+                    : "bg-gray-400"
                   }`}
               />
               <span
                 className={`relative inline-flex rounded-full h-2.5 w-2.5 ${connectionMode === "ws"
-                    ? "bg-emerald-400"
-                    : connectionMode === "poll"
-                      ? "bg-amber-400"
-                      : "bg-gray-400"
+                  ? "bg-emerald-400"
+                  : connectionMode === "poll"
+                    ? "bg-amber-400"
+                    : "bg-gray-400"
                   }`}
               />
             </span>
@@ -215,14 +215,13 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Center Column — Charts */}
-        <div className="lg:col-span-5 space-y-4">
+        {/* Center Column — SHAP */}
+        <div className="lg:col-span-5">
           <ShapWaterfall
             shapValues={shapValues}
             baseValue={shapBase}
             loading={shapLoading}
           />
-          <TimelineChart transactions={recentTransactions} />
         </div>
 
         {/* Right Column — Alert Panel + Risk Distribution */}
@@ -251,6 +250,11 @@ export default function DashboardPage() {
           </div>
           <RiskDistribution transactions={recentTransactions} />
         </div>
+      </div>
+
+      {/* ── Risk Trend — Full Width ────────────────────────── */}
+      <div className="mt-4">
+        <TimelineChart transactions={recentTransactions} />
       </div>
 
       {/* ── Footer ─────────────────────────────────────────── */}
