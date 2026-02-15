@@ -9,9 +9,10 @@ type ConnectionMode = "ws" | "poll" | "connecting";
 /**
  * Custom hook for real-time transaction streaming.
  * Tries WebSocket first, auto-falls back to HTTP polling after 3 failures.
+ * Keeps ALL transactions for stats, returns recent ones for display.
  */
-export function useTransactionStream(maxItems: number = 50) {
-    const [transactions, setTransactions] = useState<StreamTransaction[]>([]);
+export function useTransactionStream(displayLimit: number = 50) {
+    const [allTransactions, setAllTransactions] = useState<StreamTransaction[]>([]);
     const [connectionMode, setConnectionMode] = useState<ConnectionMode>("connecting");
     const wsRef = useRef<WebSocket | null>(null);
     const failCountRef = useRef(0);
@@ -19,12 +20,9 @@ export function useTransactionStream(maxItems: number = 50) {
     const latestIdRef = useRef(0);
 
     const addTransaction = useCallback((tx: StreamTransaction) => {
-        setTransactions((prev) => {
-            const next = [tx, ...prev];
-            return next.slice(0, maxItems);
-        });
+        setAllTransactions((prev) => [tx, ...prev]);
         latestIdRef.current = Math.max(latestIdRef.current, tx.id);
-    }, [maxItems]);
+    }, []);
 
     // ── WebSocket Connection ──
     const connectWebSocket = useCallback(() => {
@@ -95,5 +93,10 @@ export function useTransactionStream(maxItems: number = 50) {
         };
     }, [connectWebSocket]);
 
-    return { transactions, connectionMode };
+    // All transactions for stats, recent ones for display feed
+    return {
+        transactions: allTransactions,
+        recentTransactions: allTransactions.slice(0, displayLimit),
+        connectionMode,
+    };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import StatsCards from "@/components/StatsCards";
 import TransactionFeed from "@/components/TransactionFeed";
@@ -10,7 +10,6 @@ import TimelineChart from "@/components/TimelineChart";
 import RiskDistribution from "@/components/RiskDistribution";
 import { useTransactionStream } from "@/hooks/useTransactionStream";
 import {
-  fetchStats,
   fetchPrediction,
   fetchShap,
   Stats,
@@ -19,8 +18,7 @@ import {
 } from "@/lib/api";
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const { transactions, connectionMode } = useTransactionStream(50);
+  const { transactions, recentTransactions, connectionMode } = useTransactionStream(50);
 
   // Selected transaction state
   const [selectedTx, setSelectedTx] = useState<StreamTransaction | null>(null);
@@ -35,17 +33,34 @@ export default function DashboardPage() {
   const [shapBase, setShapBase] = useState(0);
   const [shapLoading, setShapLoading] = useState(false);
 
-  // Poll live stats every 3 seconds (stats grow as streamer processes txs)
-  useEffect(() => {
-    const poll = () => {
-      fetchStats()
-        .then(setStats)
-        .catch((e) => console.error("Stats error:", e));
+  // Compute stats instantly from the transactions array (~0ms delay)
+  const stats = useMemo<Stats | null>(() => {
+    const total = transactions.length;
+    if (total === 0) return null;
+
+    const flagged = transactions.filter(
+      (t) => t.risk_level === "CRITICAL" || t.risk_level === "HIGH"
+    ).length;
+    const blockedAmount = transactions
+      .filter((t) => t.recommendation === "BLOCK")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const avgRisk =
+      transactions.reduce((sum, t) => sum + t.combined_confidence, 0) / total;
+    // Accuracy: compare model flag vs actual is_fraud
+    const correct = transactions.filter((t) => {
+      const modelSaysFraud = t.risk_level === "CRITICAL" || t.risk_level === "HIGH";
+      return modelSaysFraud === (t.is_fraud === 1);
+    }).length;
+
+    return {
+      total_transactions: total,
+      flagged_transactions: flagged,
+      fraud_rate: flagged / total,
+      model_accuracy: correct / total,
+      blocked_amount: blockedAmount,
+      avg_risk_score: avgRisk,
     };
-    poll(); // initial fetch
-    const interval = setInterval(poll, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  }, [transactions]);
 
   // Handle transaction selection
   const handleSelectTransaction = useCallback(
@@ -135,7 +150,7 @@ export default function DashboardPage() {
         {/* Left Column — Transaction Feed */}
         <div className="lg:col-span-3 h-[600px]">
           <TransactionFeed
-            transactions={transactions}
+            transactions={recentTransactions}
             connectionMode={connectionMode}
             onSelect={handleSelectTransaction}
             selectedId={selectedTx?.id ?? null}
@@ -149,7 +164,7 @@ export default function DashboardPage() {
             baseValue={shapBase}
             loading={shapLoading}
           />
-          <TimelineChart transactions={transactions} />
+          <TimelineChart transactions={recentTransactions} />
         </div>
 
         {/* Right Column — Alert Panel + Risk Distribution */}
@@ -176,7 +191,7 @@ export default function DashboardPage() {
               }
             />
           </div>
-          <RiskDistribution transactions={transactions} />
+          <RiskDistribution transactions={recentTransactions} />
         </div>
       </div>
 
