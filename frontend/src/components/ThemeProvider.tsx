@@ -55,7 +55,7 @@ export function ThemeToggle() {
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
         >
             <div className="theme-toggle-knob">
-                {theme === "dark" ? "🌙" : "☀️"}
+                {theme === "dark" ? "Dark" : "Light"}
             </div>
         </button>
     );

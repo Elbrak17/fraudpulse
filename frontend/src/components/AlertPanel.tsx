@@ -47,8 +47,8 @@ function ScoreGauge({
                 {sublabel && (
                     <span
                         className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${sublabel === "fraud"
-                                ? "bg-red-500/15 text-red-400"
-                                : "bg-emerald-500/15 text-emerald-400"
+                            ? "bg-red-500/15 text-red-400"
+                            : "bg-emerald-500/15 text-emerald-400"
                             }`}
                     >
                         {sublabel === "fraud" ? "ANOMALY" : "NORMAL"}
@@ -153,8 +153,8 @@ export default function AlertPanel({
     if (transactionId === null) {
         return (
             <div className="glass-card p-4 h-full flex flex-col items-center justify-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl">
-                    🔍
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-blue-400/60" />
                 </div>
                 <div className="text-center">
                     <p className="text-xs font-medium text-[var(--color-text-secondary)]">
@@ -206,10 +206,10 @@ export default function AlertPanel({
                     {recommendation && (
                         <span
                             className={`text-[9px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${recommendation === "BLOCK"
-                                    ? "bg-red-500/15 text-red-400 border border-red-500/20"
-                                    : recommendation === "REVIEW"
-                                        ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-                                        : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                                ? "bg-red-500/15 text-red-400 border border-red-500/20"
+                                : recommendation === "REVIEW"
+                                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
+                                    : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
                                 }`}
                         >
                             {recommendation}
@@ -255,7 +255,7 @@ export default function AlertPanel({
                     {isFraud !== null && (
                         <InfoRow
                             label="Ground Truth"
-                            value={isFraud === 1 ? "FRAUD ⚠️" : "LEGITIMATE ✓"}
+                            value={isFraud === 1 ? "FRAUD" : "LEGITIMATE"}
                             valueColor={isFraud === 1 ? "#ef4444" : "#10b981"}
                         />
                     )}

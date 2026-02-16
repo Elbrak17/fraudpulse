@@ -6,7 +6,6 @@ interface StatCardProps {
     title: string;
     value: number;
     format?: "number" | "percent" | "currency";
-    icon: string;
     gradient: string;
     glowClass: string;
     delay?: number;
@@ -27,7 +26,6 @@ function StatCard({
     title,
     value,
     format = "number",
-    icon,
     gradient,
     glowClass,
     delay = 0,
@@ -55,11 +53,6 @@ function StatCard({
                     <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                         <span className="stat-number">{formatValue(value, format)}</span>
                     </p>
-                </div>
-                <div
-                    className={`w-10 h-10 rounded-xl ${gradient} flex items-center justify-center text-base shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300`}
-                >
-                    {icon}
                 </div>
             </div>
         </motion.div>
@@ -93,7 +86,6 @@ export default function StatsCards({ stats }: StatsCardsProps) {
             <StatCard
                 title="Total Analyzed"
                 value={stats.total_transactions}
-                icon="📊"
                 gradient="gradient-blue"
                 glowClass="glow-blue"
                 delay={0}
@@ -101,7 +93,6 @@ export default function StatsCards({ stats }: StatsCardsProps) {
             <StatCard
                 title="Flagged Fraud"
                 value={stats.flagged_transactions}
-                icon="🚨"
                 gradient="gradient-danger"
                 glowClass="glow-danger"
                 delay={0.07}
@@ -110,7 +101,6 @@ export default function StatsCards({ stats }: StatsCardsProps) {
                 title="Model Accuracy"
                 value={stats.model_accuracy}
                 format="percent"
-                icon="🎯"
                 gradient="gradient-safe"
                 glowClass="glow-safe"
                 delay={0.14}
@@ -119,7 +109,6 @@ export default function StatsCards({ stats }: StatsCardsProps) {
                 title="Amount Blocked"
                 value={stats.blocked_amount}
                 format="currency"
-                icon="🛡️"
                 gradient="gradient-purple"
                 glowClass="glow-purple"
                 delay={0.21}

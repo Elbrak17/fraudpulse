@@ -131,10 +131,9 @@ export default function DashboardPage() {
         <div className="flex items-center gap-4">
           {/* Animated Logo */}
           <div className="relative">
-            <div className="w-11 h-11 rounded-xl gradient-danger flex items-center justify-center text-xl shadow-lg shadow-red-500/20">
-              🛡️
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-3 h-3 rounded-sm bg-white/90" />
             </div>
-            <div className="pulse-ring text-red-500/40 rounded-xl" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold gradient-text tracking-tight">

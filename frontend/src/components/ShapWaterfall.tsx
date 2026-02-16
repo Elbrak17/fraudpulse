@@ -42,8 +42,8 @@ export default function ShapWaterfall({
                     Explainable AI — SHAP Analysis
                 </h3>
                 <div className="flex flex-col items-center justify-center h-64 gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-lg">
-                        🧠
+                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-rose-400/60" />
                     </div>
                     <span className="text-[var(--color-text-muted)] text-xs">
                         Select a transaction to see feature contributions
