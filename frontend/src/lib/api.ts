@@ -101,21 +101,43 @@ export async function* streamExplanation(id: number): AsyncGenerator<string> {
     if (!reader) return;
 
     const decoder = new TextDecoder();
+    let buffer = "";
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const text = decoder.decode(value);
-        const lines = text.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process only complete lines (ending with \n)
+        const lines = buffer.split("\n");
+        // Keep the last (possibly incomplete) line in the buffer
+        buffer = lines.pop() ?? "";
+
         for (const line of lines) {
-            if (line.startsWith("data: ")) {
-                const data = line.slice(6);
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            if (trimmed.startsWith("data: ")) {
+                const data = trimmed.slice(6);
                 if (data === "[DONE]") return;
                 try {
                     const parsed = JSON.parse(data);
-                    yield parsed.text;
-                } catch { /* skip malformed */ }
+                    if (parsed.text) yield parsed.text;
+                } catch {
+                    // Incomplete JSON — shouldn't happen now with proper buffering
+                }
             }
+        }
+    }
+
+    // Process any remaining data in the buffer
+    if (buffer.trim().startsWith("data: ")) {
+        const data = buffer.trim().slice(6);
+        if (data !== "[DONE]") {
+            try {
+                const parsed = JSON.parse(data);
+                if (parsed.text) yield parsed.text;
+            } catch { /* final incomplete chunk */ }
         }
     }
 }

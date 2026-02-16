@@ -95,7 +95,7 @@ async def stream_explanation(transaction_data: dict, shap_top5: list[dict]):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=0.4,
-                max_output_tokens=800,
+                max_output_tokens=1500,
             ),
         )
         for chunk in response:
