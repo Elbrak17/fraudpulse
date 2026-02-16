@@ -17,12 +17,15 @@ export interface Transaction {
 
 export interface StreamTransaction {
     id: number;
+    df_idx: number;
     time: number;
     amount: number;
     is_fraud: number;
     risk_level: string;
     combined_confidence: number;
     recommendation: string;
+    if_label: string;
+    ae_label: string;
 }
 
 export interface Stats {

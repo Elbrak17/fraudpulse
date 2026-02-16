@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { streamExplanation } from "@/lib/api";
 import { RISK_BG_CLASSES } from "@/lib/constants";
 
 interface AlertPanelProps {
     transactionId: number | null;
+    dfIdx: number | null;
     riskLevel: string | null;
     ifScore: number | null;
     aeScore: number | null;
     recommendation: string | null;
     confidence: number | null;
     amount: number | null;
-    time: number | null;
     isFraud: number | null;
     ifLabel: string | null;
     aeLabel: string | null;
@@ -46,12 +46,12 @@ function ScoreGauge({
                 </p>
                 {sublabel && (
                     <span
-                        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${sublabel === "ANOMALY"
+                        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${sublabel === "fraud"
                                 ? "bg-red-500/15 text-red-400"
                                 : "bg-emerald-500/15 text-emerald-400"
                             }`}
                     >
-                        {sublabel}
+                        {sublabel === "fraud" ? "ANOMALY" : "NORMAL"}
                     </span>
                 )}
             </div>
@@ -97,22 +97,31 @@ function InfoRow({
 
 export default function AlertPanel({
     transactionId,
+    dfIdx,
     riskLevel,
     ifScore,
     aeScore,
     recommendation,
     confidence,
     amount,
-    time,
     isFraud,
     ifLabel,
     aeLabel,
 }: AlertPanelProps) {
     const [explanation, setExplanation] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
+    const receivedAtRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (transactionId === null) return;
+        if (transactionId === null || dfIdx === null) return;
+
+        // Capture when user selects the transaction
+        receivedAtRef.current = new Date().toLocaleTimeString("en-US", {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        });
 
         setExplanation("");
         setIsStreaming(true);
@@ -121,7 +130,7 @@ export default function AlertPanel({
 
         (async () => {
             try {
-                for await (const chunk of streamExplanation(transactionId)) {
+                for await (const chunk of streamExplanation(dfIdx)) {
                     if (cancelled) break;
                     setExplanation((prev) => prev + chunk);
                 }
@@ -139,7 +148,7 @@ export default function AlertPanel({
         return () => {
             cancelled = true;
         };
-    }, [transactionId]);
+    }, [transactionId, dfIdx]);
 
     if (transactionId === null) {
         return (
@@ -237,12 +246,10 @@ export default function AlertPanel({
                             }
                         />
                     )}
-                    {time !== null && (
+                    {receivedAtRef.current && (
                         <InfoRow
-                            label="Time (seconds)"
-                            value={time.toLocaleString("en-US", {
-                                maximumFractionDigits: 0,
-                            })}
+                            label="Received At"
+                            value={receivedAtRef.current}
                         />
                     )}
                     {isFraud !== null && (
@@ -304,7 +311,7 @@ export default function AlertPanel({
                 </div>
             )}
 
-            {/* LLM Explanation — flexible height */}
+            {/* LLM Explanation — takes all remaining space */}
             <div className="flex-1 bg-white/3 rounded-xl p-3 overflow-y-auto min-h-0">
                 <p className="text-[9px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-[0.15em] font-medium flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400 pulse-dot" />
@@ -316,19 +323,6 @@ export default function AlertPanel({
                 >
                     {explanation || (isStreaming ? "" : "Loading analysis...")}
                 </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-3 gap-2 mt-3 flex-shrink-0">
-                <button className="px-3 py-2 rounded-xl text-[10px] font-bold text-red-300 bg-red-500/10 border border-red-500/20 hover:bg-red-500/25 hover:border-red-500/30 hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300 uppercase tracking-wider">
-                    🚫 Block
-                </button>
-                <button className="px-3 py-2 rounded-xl text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/25 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 uppercase tracking-wider">
-                    👁️ Review
-                </button>
-                <button className="px-3 py-2 rounded-xl text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/25 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 uppercase tracking-wider">
-                    ✅ Allow
-                </button>
             </div>
         </motion.div>
     );

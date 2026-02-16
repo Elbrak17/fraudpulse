@@ -98,8 +98,8 @@ export default function DashboardPage() {
 
       try {
         const [pred, shap] = await Promise.all([
-          fetchPrediction(tx.id),
-          fetchShap(tx.id),
+          fetchPrediction(tx.df_idx),
+          fetchShap(tx.df_idx),
         ]);
         setSelectedPrediction({
           if_score: pred.if_score,
@@ -233,6 +233,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-4 h-[600px]">
           <AlertPanel
             transactionId={selectedTx?.id ?? null}
+            dfIdx={selectedTx?.df_idx ?? null}
             riskLevel={
               selectedPrediction?.risk_level ?? selectedTx?.risk_level ?? null
             }
@@ -251,10 +252,9 @@ export default function DashboardPage() {
               null
             }
             amount={selectedTx?.amount ?? null}
-            time={selectedTx?.time ?? null}
             isFraud={selectedTx?.is_fraud ?? null}
-            ifLabel={selectedPrediction ? (selectedPrediction.if_score >= 0.5 ? "ANOMALY" : "NORMAL") : null}
-            aeLabel={selectedPrediction ? (selectedPrediction.ae_reconstruction_error >= 0.5 ? "ANOMALY" : "NORMAL") : null}
+            ifLabel={selectedTx?.if_label ?? null}
+            aeLabel={selectedTx?.ae_label ?? null}
           />
         </div>
       </div>

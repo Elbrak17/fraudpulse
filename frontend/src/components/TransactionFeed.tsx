@@ -28,18 +28,18 @@ export default function TransactionFeed({
                     <span className="relative flex h-2 w-2">
                         <span
                             className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${connectionMode === "ws"
-                                    ? "bg-emerald-400 animate-ping"
-                                    : connectionMode === "poll"
-                                        ? "bg-amber-400"
-                                        : "bg-gray-400"
+                                ? "bg-emerald-400 animate-ping"
+                                : connectionMode === "poll"
+                                    ? "bg-amber-400"
+                                    : "bg-gray-400"
                                 }`}
                         />
                         <span
                             className={`relative inline-flex rounded-full h-2 w-2 ${connectionMode === "ws"
-                                    ? "bg-emerald-400"
-                                    : connectionMode === "poll"
-                                        ? "bg-amber-400"
-                                        : "bg-gray-400"
+                                ? "bg-emerald-400"
+                                : connectionMode === "poll"
+                                    ? "bg-amber-400"
+                                    : "bg-gray-400"
                                 }`}
                         />
                     </span>
@@ -88,10 +88,10 @@ export default function TransactionFeed({
                                     {/* Risk indicator bar */}
                                     <div
                                         className={`w-1.5 h-8 rounded-full flex-shrink-0 ${isHighRisk
-                                                ? "gradient-danger"
-                                                : tx.risk_level === "MEDIUM"
-                                                    ? "gradient-warning"
-                                                    : "gradient-safe"
+                                            ? "gradient-danger"
+                                            : tx.risk_level === "MEDIUM"
+                                                ? "gradient-warning"
+                                                : "gradient-safe"
                                             }`}
                                     />
 
@@ -111,10 +111,10 @@ export default function TransactionFeed({
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     <span
                                         className={`text-xs font-bold stat-number ${isHighRisk
-                                                ? "text-red-400"
-                                                : tx.risk_level === "MEDIUM"
-                                                    ? "text-amber-400"
-                                                    : "text-emerald-400"
+                                            ? "text-red-400"
+                                            : tx.risk_level === "MEDIUM"
+                                                ? "text-amber-400"
+                                                : "text-emerald-400"
                                             }`}
                                     >
                                         ${Math.abs(tx.amount).toFixed(2)}
@@ -132,9 +132,13 @@ export default function TransactionFeed({
                 </AnimatePresence>
 
                 {transactions.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-32 gap-2">
-                        <div className="w-8 h-8 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
-                        <p className="text-[var(--color-text-muted)] text-xs">
+                    <div className="flex flex-col items-center justify-center h-24 gap-3 overflow-hidden">
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-400/60 animate-pulse" />
+                            <span className="w-2 h-2 rounded-full bg-blue-400/60 animate-pulse" style={{ animationDelay: "0.3s" }} />
+                            <span className="w-2 h-2 rounded-full bg-blue-400/60 animate-pulse" style={{ animationDelay: "0.6s" }} />
+                        </div>
+                        <p className="text-[var(--color-text-muted)] text-[10px] uppercase tracking-wider">
                             Waiting for transactions...
                         </p>
                     </div>

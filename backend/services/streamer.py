@@ -69,12 +69,15 @@ class TransactionStreamer:
 
         tx = {
             "id": int(self.current_index),
+            "df_idx": int(df_idx),
             "time": float(row.get("Time", 0)),
             "amount": float(row.get("Amount", 0)),
             "is_fraud": int(row["Class"]),
             "risk_level": prediction["risk_level"],
             "combined_confidence": prediction["combined_confidence"],
             "recommendation": prediction["recommendation"],
+            "if_label": prediction["if_label"],
+            "ae_label": prediction["ae_label"],
         }
 
         self.current_index += 1

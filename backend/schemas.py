@@ -63,9 +63,12 @@ class StatsOut(BaseModel):
 class StreamTransaction(BaseModel):
     """A transaction sent via WebSocket or polling."""
     id: int
+    df_idx: int  # Real dataset row index for /api/explain and /api/shap
     time: float
     amount: float
     risk_level: RiskLevel
     combined_confidence: float
     is_fraud: int
     recommendation: str
+    if_label: str  # "fraud" or "legitimate"
+    ae_label: str  # "fraud" or "legitimate"
