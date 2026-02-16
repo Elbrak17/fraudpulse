@@ -12,17 +12,24 @@ interface AlertPanelProps {
     aeScore: number | null;
     recommendation: string | null;
     confidence: number | null;
+    amount: number | null;
+    time: number | null;
+    isFraud: number | null;
+    ifLabel: string | null;
+    aeLabel: string | null;
 }
 
 function ScoreGauge({
     label,
     value,
+    sublabel,
     max,
     formatFn,
     color,
 }: {
     label: string;
     value: number;
+    sublabel?: string | null;
     max: number;
     formatFn: (v: number) => string;
     color: string;
@@ -30,13 +37,25 @@ function ScoreGauge({
     const pct = Math.min((value / max) * 100, 100);
     return (
         <div className="bg-white/5 rounded-xl p-3 relative overflow-hidden">
-            <p className="text-[10px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-medium">
+            <p className="text-[10px] text-[var(--color-text-muted)] mb-1 uppercase tracking-wider font-medium">
                 {label}
             </p>
-            <p className="text-lg font-bold text-[var(--color-text-primary)] stat-number mb-2">
-                {formatFn(value)}
-            </p>
-            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+            <div className="flex items-baseline gap-2">
+                <p className="text-lg font-bold text-[var(--color-text-primary)] stat-number">
+                    {formatFn(value)}
+                </p>
+                {sublabel && (
+                    <span
+                        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${sublabel === "ANOMALY"
+                                ? "bg-red-500/15 text-red-400"
+                                : "bg-emerald-500/15 text-emerald-400"
+                            }`}
+                    >
+                        {sublabel}
+                    </span>
+                )}
+            </div>
+            <div className="h-1 bg-white/5 rounded-full overflow-hidden mt-1.5">
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
@@ -52,6 +71,30 @@ function ScoreGauge({
     );
 }
 
+function InfoRow({
+    label,
+    value,
+    valueColor,
+}: {
+    label: string;
+    value: string;
+    valueColor?: string;
+}) {
+    return (
+        <div className="flex items-center justify-between py-1.5">
+            <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider font-medium">
+                {label}
+            </span>
+            <span
+                className="text-xs font-bold stat-number"
+                style={{ color: valueColor }}
+            >
+                {value}
+            </span>
+        </div>
+    );
+}
+
 export default function AlertPanel({
     transactionId,
     riskLevel,
@@ -59,6 +102,11 @@ export default function AlertPanel({
     aeScore,
     recommendation,
     confidence,
+    amount,
+    time,
+    isFraud,
+    ifLabel,
+    aeLabel,
 }: AlertPanelProps) {
     const [explanation, setExplanation] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
@@ -136,7 +184,7 @@ export default function AlertPanel({
             />
 
             {/* Header */}
-            <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-white/5">
+            <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-white/5 flex-shrink-0">
                 <div>
                     <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em]">
                         AI Fraud Analysis
@@ -170,11 +218,49 @@ export default function AlertPanel({
                 </div>
             </div>
 
+            {/* Transaction Details */}
+            <div className="bg-white/5 rounded-xl p-2.5 mb-3 flex-shrink-0">
+                <div className="divide-y divide-white/5">
+                    {amount !== null && (
+                        <InfoRow
+                            label="Amount"
+                            value={`$${Math.abs(amount).toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                            })}`}
+                            valueColor={
+                                Math.abs(amount) > 500
+                                    ? "#ef4444"
+                                    : Math.abs(amount) > 100
+                                        ? "#f59e0b"
+                                        : "#10b981"
+                            }
+                        />
+                    )}
+                    {time !== null && (
+                        <InfoRow
+                            label="Time (seconds)"
+                            value={time.toLocaleString("en-US", {
+                                maximumFractionDigits: 0,
+                            })}
+                        />
+                    )}
+                    {isFraud !== null && (
+                        <InfoRow
+                            label="Ground Truth"
+                            value={isFraud === 1 ? "FRAUD ⚠️" : "LEGITIMATE ✓"}
+                            valueColor={isFraud === 1 ? "#ef4444" : "#10b981"}
+                        />
+                    )}
+                </div>
+            </div>
+
             {/* Dual Model Scores */}
-            <div className="grid grid-cols-2 gap-2.5 mb-3">
+            <div className="grid grid-cols-2 gap-2.5 mb-3 flex-shrink-0">
                 <ScoreGauge
                     label="Isolation Forest"
                     value={ifScore ?? 0}
+                    sublabel={ifLabel}
                     max={1}
                     formatFn={(v) => `${(v * 100).toFixed(1)}%`}
                     color={riskColor}
@@ -182,6 +268,7 @@ export default function AlertPanel({
                 <ScoreGauge
                     label="Autoencoder Error"
                     value={aeScore ?? 0}
+                    sublabel={aeLabel}
                     max={1}
                     formatFn={(v) => v.toFixed(4)}
                     color="#8b5cf6"
@@ -190,7 +277,7 @@ export default function AlertPanel({
 
             {/* Combined Confidence */}
             {confidence !== null && (
-                <div className="mb-3 bg-white/5 rounded-xl p-2.5">
+                <div className="mb-3 bg-white/5 rounded-xl p-2.5 flex-shrink-0">
                     <div className="flex justify-between text-[10px] mb-1.5">
                         <span className="text-[var(--color-text-muted)] uppercase tracking-wider font-medium">
                             Combined Confidence
@@ -217,7 +304,7 @@ export default function AlertPanel({
                 </div>
             )}
 
-            {/* LLM Explanation */}
+            {/* LLM Explanation — flexible height */}
             <div className="flex-1 bg-white/3 rounded-xl p-3 overflow-y-auto min-h-0">
                 <p className="text-[9px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-[0.15em] font-medium flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400 pulse-dot" />
@@ -232,7 +319,7 @@ export default function AlertPanel({
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="grid grid-cols-3 gap-2 mt-3 flex-shrink-0">
                 <button className="px-3 py-2 rounded-xl text-[10px] font-bold text-red-300 bg-red-500/10 border border-red-500/20 hover:bg-red-500/25 hover:border-red-500/30 hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300 uppercase tracking-wider">
                     🚫 Block
                 </button>

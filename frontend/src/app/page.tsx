@@ -215,40 +215,47 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Center Column — SHAP */}
-        <div className="lg:col-span-5">
-          <ShapWaterfall
-            shapValues={shapValues}
-            baseValue={shapBase}
-            loading={shapLoading}
-          />
-        </div>
-
-        {/* Right Column — Alert Panel + Risk Distribution */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="h-[400px]">
-            <AlertPanel
-              transactionId={selectedTx?.id ?? null}
-              riskLevel={
-                selectedPrediction?.risk_level ?? selectedTx?.risk_level ?? null
-              }
-              ifScore={selectedPrediction?.if_score ?? null}
-              aeScore={
-                selectedPrediction?.ae_reconstruction_error ?? null
-              }
-              recommendation={
-                selectedPrediction?.recommendation ??
-                selectedTx?.recommendation ??
-                null
-              }
-              confidence={
-                selectedPrediction?.combined_confidence ??
-                selectedTx?.combined_confidence ??
-                null
-              }
+        {/* Center Column — SHAP + Risk Distribution */}
+        <div className="lg:col-span-5 h-[600px] flex flex-col gap-4">
+          <div className="flex-1 min-h-0">
+            <ShapWaterfall
+              shapValues={shapValues}
+              baseValue={shapBase}
+              loading={shapLoading}
             />
           </div>
-          <RiskDistribution transactions={recentTransactions} />
+          <div className="flex-shrink-0">
+            <RiskDistribution transactions={recentTransactions} />
+          </div>
+        </div>
+
+        {/* Right Column — Alert Panel (full height) */}
+        <div className="lg:col-span-4 h-[600px]">
+          <AlertPanel
+            transactionId={selectedTx?.id ?? null}
+            riskLevel={
+              selectedPrediction?.risk_level ?? selectedTx?.risk_level ?? null
+            }
+            ifScore={selectedPrediction?.if_score ?? null}
+            aeScore={
+              selectedPrediction?.ae_reconstruction_error ?? null
+            }
+            recommendation={
+              selectedPrediction?.recommendation ??
+              selectedTx?.recommendation ??
+              null
+            }
+            confidence={
+              selectedPrediction?.combined_confidence ??
+              selectedTx?.combined_confidence ??
+              null
+            }
+            amount={selectedTx?.amount ?? null}
+            time={selectedTx?.time ?? null}
+            isFraud={selectedTx?.is_fraud ?? null}
+            ifLabel={selectedPrediction ? (selectedPrediction.if_score >= 0.5 ? "ANOMALY" : "NORMAL") : null}
+            aeLabel={selectedPrediction ? (selectedPrediction.ae_reconstruction_error >= 0.5 ? "ANOMALY" : "NORMAL") : null}
+          />
         </div>
       </div>
 
