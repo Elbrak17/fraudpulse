@@ -364,28 +364,7 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* ── Scan Line Animation (Live Feed Header) ──────────── */
-
-@keyframes scan-line {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(200%);
-  }
-}
-
-.scan-line::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
-  animation: scan-line 3s ease-in-out infinite;
-}
+/* ── Scan Line (disabled — was overflowing) ───────────── */
 
 /* ── New Transaction Badge ────────────────────────────── */
 

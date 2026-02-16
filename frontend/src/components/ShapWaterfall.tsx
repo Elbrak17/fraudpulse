@@ -58,9 +58,11 @@ export default function ShapWaterfall({
         feature: sv.feature,
         value: sv.shap_value,
         originalValue: sv.value,
-        fill: sv.shap_value > 0 ? "#ef4444" : "#10b981",
+        // Isolation Forest: more negative decision_function = more anomalous
+        // So negative SHAP values push toward fraud, positive toward legit
+        fill: sv.shap_value < 0 ? "#ef4444" : "#10b981",
         glow:
-            sv.shap_value > 0
+            sv.shap_value < 0
                 ? "drop-shadow(0 0 4px rgba(239,68,68,0.3))"
                 : "drop-shadow(0 0 4px rgba(16,185,129,0.3))",
     }));
