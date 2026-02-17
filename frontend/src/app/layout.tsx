@@ -31,8 +31,45 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen">
+        {/* SVG Noise Filter (referenced by CSS) */}
+        <svg className="hidden" aria-hidden="true">
+          <filter id="noise-filter">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.65"
+              numOctaves="3"
+              stitchTiles="stitch"
+            />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+        </svg>
+
+        {/* Noise grain overlay */}
+        <div
+          className="noise-overlay"
+          aria-hidden="true"
+          style={{
+            filter: "url(#noise-filter)",
+            width: "100%",
+            height: "100%",
+          }}
+        />
+
         {/* Animated mesh background */}
         <div className="mesh-bg" aria-hidden="true" />
+
+        {/* Floating particles */}
+        <div className="particles-layer" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+
         <ThemeProvider>
           <div className="relative z-10">{children}</div>
         </ThemeProvider>

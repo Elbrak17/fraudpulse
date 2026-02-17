@@ -42,6 +42,43 @@ function LiveClock() {
   );
 }
 
+/* ── SVG Logo Icon ──────────────────────────────────── */
+function ShieldPulseIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="drop-shadow-lg"
+    >
+      <path
+        d="M12 2L4 6v5c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"
+        fill="url(#shield-gradient)"
+        fillOpacity="0.15"
+        stroke="url(#shield-gradient)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      {/* Pulse line inside shield */}
+      <path
+        d="M7 12h2l1.5-3 2 6 1.5-3H17"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient id="shield-gradient" x1="4" y1="2" x2="20" y2="20">
+          <stop stopColor="#3b82f6" />
+          <stop offset="0.5" stopColor="#8b5cf6" />
+          <stop offset="1" stopColor="#06b6d4" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export default function DashboardPage() {
   const { transactions, recentTransactions, connectionMode } =
     useTransactionStream(50);
@@ -126,13 +163,13 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex items-center justify-between mb-6"
+        className="flex items-center justify-between mb-4"
       >
         <div className="flex items-center gap-4">
-          {/* Animated Logo */}
+          {/* SVG Shield-Pulse Logo */}
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-              <div className="w-3 h-3 rounded-sm bg-white/90" />
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-white/10 flex items-center justify-center backdrop-blur-sm">
+              <ShieldPulseIcon />
             </div>
           </div>
           <div>
@@ -159,7 +196,7 @@ export default function DashboardPage() {
             <span className="text-[10px] font-bold text-emerald-400">
               IF + AE
             </span>
-            <span className="text-[var(--color-text-muted)] text-xs">•</span>
+            <span className="text-[var(--color-text-muted)] text-xs opacity-30">|</span>
             <span className="text-[10px] font-bold text-blue-400">
               Gemini 3
             </span>
@@ -198,6 +235,9 @@ export default function DashboardPage() {
           <ThemeToggle />
         </div>
       </motion.header>
+
+      {/* ── Header Separator ────────────────────────────────── */}
+      <div className="header-separator mb-5" />
 
       {/* ── Stats Row ──────────────────────────────────────── */}
       <StatsCards stats={stats} />
@@ -264,9 +304,20 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="mt-8 text-center text-[10px] text-[var(--color-text-muted)] py-4 border-t border-white/5 uppercase tracking-[0.15em]">
-        FraudPulse — DevDash 2026 • Isolation Forest + Autoencoder + SHAP +
-        Gemini 3 Flash
+      <footer className="mt-8 py-4 border-t border-white/5">
+        <div className="flex items-center justify-center gap-3">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/60 animate-ping" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+          </span>
+          <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-[0.15em]">
+            FraudPulse — DevDash 2026
+          </span>
+          <span className="text-[var(--color-text-muted)] opacity-30">|</span>
+          <span className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider">
+            IF + AE + SHAP + Gemini 3 Flash
+          </span>
+        </div>
       </footer>
     </div>
   );

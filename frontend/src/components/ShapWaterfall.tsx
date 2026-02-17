@@ -19,6 +19,14 @@ interface ShapWaterfallProps {
     loading?: boolean;
 }
 
+const LayersIcon = (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
+        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+        <polyline points="2 17 12 22 22 17" />
+        <polyline points="2 12 12 17 22 12" />
+    </svg>
+);
+
 export default function ShapWaterfall({
     shapValues,
     baseValue,
@@ -27,9 +35,14 @@ export default function ShapWaterfall({
     if (loading) {
         return (
             <div className="glass-card p-4 h-full">
-                <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em] mb-3">
-                    Explainable AI — SHAP Analysis
-                </h3>
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="section-icon bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                        {LayersIcon}
+                    </div>
+                    <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em]">
+                        Explainable AI — SHAP Analysis
+                    </h3>
+                </div>
                 <div className="h-64 shimmer rounded-lg" />
             </div>
         );
@@ -38,13 +51,25 @@ export default function ShapWaterfall({
     if (!shapValues || shapValues.length === 0) {
         return (
             <div className="glass-card p-4 h-full">
-                <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em] mb-3">
-                    Explainable AI — SHAP Analysis
-                </h3>
-                <div className="flex flex-col items-center justify-center h-64 gap-2">
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
-                        <div className="w-3 h-3 rounded-full bg-rose-400/60" />
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="section-icon bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                        {LayersIcon}
                     </div>
+                    <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em]">
+                        Explainable AI — SHAP Analysis
+                    </h3>
+                </div>
+                <div className="flex flex-col items-center justify-center h-64 gap-3">
+                    {/* Waveform SVG illustration */}
+                    <svg width="64" height="40" viewBox="0 0 64 40" fill="none" className="opacity-30">
+                        <path d="M2 20h8l4-14 4 28 4-18 4 10 4-6 4 12 4-20 4 14 4-8 4 4h8" stroke="url(#wave-grad)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <defs>
+                            <linearGradient id="wave-grad" x1="0" y1="20" x2="64" y2="20">
+                                <stop stopColor="#8b5cf6" />
+                                <stop offset="1" stopColor="#06b6d4" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
                     <span className="text-[var(--color-text-muted)] text-xs">
                         Select a transaction to see feature contributions
                     </span>
@@ -58,8 +83,6 @@ export default function ShapWaterfall({
         feature: sv.feature,
         value: sv.shap_value,
         originalValue: sv.value,
-        // Isolation Forest: more negative decision_function = more anomalous
-        // So negative SHAP values push toward fraud, positive toward legit
         fill: sv.shap_value < 0 ? "#ef4444" : "#10b981",
         glow:
             sv.shap_value < 0
@@ -74,23 +97,28 @@ export default function ShapWaterfall({
             className="glass-card p-4 h-full"
         >
             <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em]">
-                    Explainable AI — SHAP Analysis
-                </h3>
+                <div className="flex items-center gap-2">
+                    <div className="section-icon bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                        {LayersIcon}
+                    </div>
+                    <h3 className="text-[10px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.15em]">
+                        Explainable AI — SHAP Analysis
+                    </h3>
+                </div>
                 <div className="flex items-center gap-3 text-[9px]">
                     <span className="flex items-center gap-1.5">
                         <span
                             className="w-2.5 h-2.5 rounded-sm bg-red-500"
                             style={{ boxShadow: "0 0 8px rgba(239,68,68,0.4)" }}
                         />
-                        <span className="text-[var(--color-text-muted)]">→ Fraud</span>
+                        <span className="text-[var(--color-text-muted)]">Fraud</span>
                     </span>
                     <span className="flex items-center gap-1.5">
                         <span
                             className="w-2.5 h-2.5 rounded-sm bg-emerald-500"
                             style={{ boxShadow: "0 0 8px rgba(16,185,129,0.4)" }}
                         />
-                        <span className="text-[var(--color-text-muted)]">→ Legit</span>
+                        <span className="text-[var(--color-text-muted)]">Legit</span>
                     </span>
                 </div>
             </div>
@@ -125,13 +153,14 @@ export default function ShapWaterfall({
                     />
                     <Tooltip
                         contentStyle={{
-                            background: "rgba(12, 18, 32, 0.95)",
+                            background: "rgba(10, 15, 28, 0.95)",
                             border: "1px solid rgba(255,255,255,0.08)",
                             borderRadius: "12px",
                             color: "#f1f5f9",
                             fontSize: "11px",
                             fontFamily: "var(--font-mono)",
-                            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                            boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+                            backdropFilter: "blur(12px)",
                         }}
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         formatter={(value: any, _: any, props: any) => [
