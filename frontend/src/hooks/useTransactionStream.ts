@@ -8,8 +8,8 @@ type ConnectionMode = "ws" | "poll" | "connecting";
 
 /**
  * Custom hook for real-time transaction streaming.
+ * Seeds initial data from server buffer on mount to survive page refreshes.
  * Tries WebSocket first, auto-falls back to HTTP polling after 3 failures.
- * Keeps ALL transactions for stats, returns recent ones for display.
  */
 export function useTransactionStream(displayLimit: number = 50) {
     const [allTransactions, setAllTransactions] = useState<StreamTransaction[]>([]);
@@ -18,10 +18,35 @@ export function useTransactionStream(displayLimit: number = 50) {
     const failCountRef = useRef(0);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
     const latestIdRef = useRef(0);
+    const seededRef = useRef(false);
 
     const addTransaction = useCallback((tx: StreamTransaction) => {
-        setAllTransactions((prev) => [tx, ...prev]);
+        setAllTransactions((prev) => {
+            // Deduplicate — don't add if we already have this tx from seeding
+            if (prev.some((p) => p.id === tx.id)) return prev;
+            return [tx, ...prev];
+        });
         latestIdRef.current = Math.max(latestIdRef.current, tx.id);
+    }, []);
+
+    // ── Seed from server buffer on mount ──
+    useEffect(() => {
+        if (seededRef.current) return;
+        seededRef.current = true;
+
+        (async () => {
+            try {
+                const data = await pollTransactions(0);
+                if (data.transactions.length > 0) {
+                    // Sort descending by id (newest first)
+                    const sorted = [...data.transactions].sort((a, b) => b.id - a.id);
+                    setAllTransactions(sorted);
+                    latestIdRef.current = sorted[0].id;
+                }
+            } catch {
+                // Server not ready — will get data from WS/poll
+            }
+        })();
     }, []);
 
     // ── WebSocket Connection ──

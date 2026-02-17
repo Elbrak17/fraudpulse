@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import StatsCards from "@/components/StatsCards";
 import TransactionFeed from "@/components/TransactionFeed";
@@ -97,80 +97,33 @@ export default function DashboardPage() {
   const [shapBase, setShapBase] = useState(0);
   const [shapLoading, setShapLoading] = useState(false);
 
-  // ── Baseline stats from server (persists across page refreshes) ──
-  const [baselineStats, setBaselineStats] = useState<Stats | null>(null);
+  // ── Stats from server (single source of truth, polled periodically) ──
+  const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    const loadBaseline = async () => {
+    const loadStats = async () => {
       try {
         const s = await fetchStats();
-        setBaselineStats(s);
+        setStats(s);
       } catch {
-        // Server might not be ready yet — that's fine
+        // Server not ready yet
       }
     };
-    loadBaseline();
+    loadStats();
 
-    // Re-fetch when tab becomes visible again (handles alt-tab back)
+    // Poll stats every 3 seconds for live updates
+    const interval = setInterval(loadStats, 3000);
+
+    // Also refresh when tab becomes visible again
     const onVisibility = () => {
-      if (document.visibilityState === "visible") loadBaseline();
+      if (document.visibilityState === "visible") loadStats();
     };
     document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
-
-  // Compute stats: server baseline + locally received transactions
-  const stats = useMemo<Stats | null>(() => {
-    const local = transactions.length;
-
-    // No baseline and no local data → null
-    if (!baselineStats && local === 0) return null;
-
-    // Local-only computation from live stream
-    const localFlagged = transactions.filter(
-      (t) => t.risk_level === "CRITICAL" || t.risk_level === "HIGH"
-    ).length;
-    const localBlocked = transactions
-      .filter((t) => t.recommendation === "BLOCK")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const localAvgRisk = local > 0
-      ? transactions.reduce((sum, t) => sum + t.combined_confidence, 0) / local
-      : 0;
-    const localCorrect = transactions.filter((t) => {
-      const modelSaysFraud =
-        t.risk_level === "CRITICAL" || t.risk_level === "HIGH";
-      return modelSaysFraud === (t.is_fraud === 1);
-    }).length;
-
-    // If we have a baseline, merge server totals + local additions
-    if (baselineStats) {
-      const totalAll = baselineStats.total_transactions + local;
-      const flaggedAll = baselineStats.flagged_transactions + localFlagged;
-      const blockedAll = baselineStats.blocked_amount + localBlocked;
-      const correctAll = Math.round(baselineStats.model_accuracy * baselineStats.total_transactions) + localCorrect;
-
-      return {
-        total_transactions: totalAll,
-        flagged_transactions: flaggedAll,
-        fraud_rate: totalAll > 0 ? flaggedAll / totalAll : 0,
-        model_accuracy: totalAll > 0 ? correctAll / totalAll : 0,
-        blocked_amount: blockedAll,
-        avg_risk_score: totalAll > 0
-          ? (baselineStats.avg_risk_score * baselineStats.total_transactions + localAvgRisk * local) / totalAll
-          : 0,
-      };
-    }
-
-    // No baseline — pure local computation
-    return {
-      total_transactions: local,
-      flagged_transactions: localFlagged,
-      fraud_rate: local > 0 ? localFlagged / local : 0,
-      model_accuracy: local > 0 ? localCorrect / local : 0,
-      blocked_amount: localBlocked,
-      avg_risk_score: localAvgRisk,
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [transactions, baselineStats]);
+  }, []);
 
   // Handle transaction selection
   const handleSelectTransaction = useCallback(
