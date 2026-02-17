@@ -13,6 +13,7 @@ import { useTransactionStream } from "@/hooks/useTransactionStream";
 import {
   fetchPrediction,
   fetchShap,
+  fetchStats,
   Stats,
   StreamTransaction,
   ShapValue,
@@ -96,34 +97,80 @@ export default function DashboardPage() {
   const [shapBase, setShapBase] = useState(0);
   const [shapLoading, setShapLoading] = useState(false);
 
-  // Compute stats instantly from the transactions array (~0ms delay)
-  const stats = useMemo<Stats | null>(() => {
-    const total = transactions.length;
-    if (total === 0) return null;
+  // ── Baseline stats from server (persists across page refreshes) ──
+  const [baselineStats, setBaselineStats] = useState<Stats | null>(null);
 
-    const flagged = transactions.filter(
+  useEffect(() => {
+    const loadBaseline = async () => {
+      try {
+        const s = await fetchStats();
+        setBaselineStats(s);
+      } catch {
+        // Server might not be ready yet — that's fine
+      }
+    };
+    loadBaseline();
+
+    // Re-fetch when tab becomes visible again (handles alt-tab back)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadBaseline();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  // Compute stats: server baseline + locally received transactions
+  const stats = useMemo<Stats | null>(() => {
+    const local = transactions.length;
+
+    // No baseline and no local data → null
+    if (!baselineStats && local === 0) return null;
+
+    // Local-only computation from live stream
+    const localFlagged = transactions.filter(
       (t) => t.risk_level === "CRITICAL" || t.risk_level === "HIGH"
     ).length;
-    const blockedAmount = transactions
+    const localBlocked = transactions
       .filter((t) => t.recommendation === "BLOCK")
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const avgRisk =
-      transactions.reduce((sum, t) => sum + t.combined_confidence, 0) / total;
-    const correct = transactions.filter((t) => {
+    const localAvgRisk = local > 0
+      ? transactions.reduce((sum, t) => sum + t.combined_confidence, 0) / local
+      : 0;
+    const localCorrect = transactions.filter((t) => {
       const modelSaysFraud =
         t.risk_level === "CRITICAL" || t.risk_level === "HIGH";
       return modelSaysFraud === (t.is_fraud === 1);
     }).length;
 
+    // If we have a baseline, merge server totals + local additions
+    if (baselineStats) {
+      const totalAll = baselineStats.total_transactions + local;
+      const flaggedAll = baselineStats.flagged_transactions + localFlagged;
+      const blockedAll = baselineStats.blocked_amount + localBlocked;
+      const correctAll = Math.round(baselineStats.model_accuracy * baselineStats.total_transactions) + localCorrect;
+
+      return {
+        total_transactions: totalAll,
+        flagged_transactions: flaggedAll,
+        fraud_rate: totalAll > 0 ? flaggedAll / totalAll : 0,
+        model_accuracy: totalAll > 0 ? correctAll / totalAll : 0,
+        blocked_amount: blockedAll,
+        avg_risk_score: totalAll > 0
+          ? (baselineStats.avg_risk_score * baselineStats.total_transactions + localAvgRisk * local) / totalAll
+          : 0,
+      };
+    }
+
+    // No baseline — pure local computation
     return {
-      total_transactions: total,
-      flagged_transactions: flagged,
-      fraud_rate: flagged / total,
-      model_accuracy: correct / total,
-      blocked_amount: blockedAmount,
-      avg_risk_score: avgRisk,
+      total_transactions: local,
+      flagged_transactions: localFlagged,
+      fraud_rate: local > 0 ? localFlagged / local : 0,
+      model_accuracy: local > 0 ? localCorrect / local : 0,
+      blocked_amount: localBlocked,
+      avg_risk_score: localAvgRisk,
     };
-  }, [transactions]);
+  }, [transactions, baselineStats]);
 
   // Handle transaction selection
   const handleSelectTransaction = useCallback(

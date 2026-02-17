@@ -76,8 +76,10 @@ Provide your complete fraud analysis now — include all 4 sections (Risk Assess
 async def stream_explanation(transaction_data: dict, shap_top5: list[dict]):
     """
     Generator that yields chunks of LLM explanation text.
-    Used for SSE streaming to the frontend.
+    Uses native async streaming to avoid blocking the event loop.
     """
+    import asyncio
+
     if not GEMINI_API_KEY:
         # Fallback for when no API key is set
         fallback = _generate_fallback(transaction_data)
@@ -89,18 +91,22 @@ async def stream_explanation(transaction_data: dict, shap_top5: list[dict]):
     prompt = build_prompt(transaction_data, shap_top5)
 
     try:
-        response = client.models.generate_content_stream(
+        # Use native async streaming (client.aio) to prevent event loop blocking
+        # which was causing truncated explanations — especially on low-risk txns
+        async_response = await client.aio.models.generate_content_stream(
             model="gemini-3-flash-preview",
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
-                temperature=0.4,
-                max_output_tokens=1500,
+                max_output_tokens=2048,
+                thinking_config=types.ThinkingConfig(thinking_level="low"),
             ),
         )
-        for chunk in response:
+        async for chunk in async_response:
             if chunk.text:
                 yield chunk.text
+                # Give the event loop breathing room between chunks
+                await asyncio.sleep(0)
     except Exception as e:
         yield f"[Analysis unavailable: {str(e)}] "
         fallback = _generate_fallback(transaction_data)
