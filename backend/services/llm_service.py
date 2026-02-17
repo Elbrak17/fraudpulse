@@ -99,7 +99,6 @@ async def stream_explanation(transaction_data: dict, shap_top5: list[dict]):
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 max_output_tokens=2048,
-                thinking_config=types.ThinkingConfig(thinking_level="low"),
             ),
         )
         async for chunk in async_response:
