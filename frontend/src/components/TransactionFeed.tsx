@@ -70,7 +70,7 @@ export default function TransactionFeed({
 
             {/* Transaction List */}
             <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence initial={false}>
                     {transactions.map((tx, index) => {
                         const isNew = index === 0;
                         const isCritical = tx.risk_level === "CRITICAL";
@@ -81,11 +81,10 @@ export default function TransactionFeed({
                         return (
                             <motion.div
                                 key={`tx-${tx.id}-${tx.amount}`}
-                                layout
-                                initial={{ opacity: 0, x: -30, scale: 0.95 }}
-                                animate={{ opacity: 1, x: 0, scale: 1 }}
-                                exit={{ opacity: 0, x: 30, scale: 0.95 }}
-                                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }}
+                                transition={{ duration: 0.25, ease: "easeOut" }}
                                 onClick={() => onSelect(tx)}
                                 className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all duration-200
                   ${isSelected

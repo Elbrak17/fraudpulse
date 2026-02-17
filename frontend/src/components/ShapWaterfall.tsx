@@ -132,7 +132,7 @@ export default function ShapWaterfall({
                     <XAxis
                         type="number"
                         tick={{
-                            fill: "#475569",
+                            fill: "var(--color-text-muted)",
                             fontSize: 9,
                             fontFamily: "var(--font-mono)",
                         }}
@@ -143,7 +143,7 @@ export default function ShapWaterfall({
                         type="category"
                         dataKey="feature"
                         tick={{
-                            fill: "#94a3b8",
+                            fill: "var(--color-text-secondary)",
                             fontSize: 10,
                             fontFamily: "var(--font-mono)",
                         }}
@@ -153,15 +153,17 @@ export default function ShapWaterfall({
                     />
                     <Tooltip
                         contentStyle={{
-                            background: "rgba(10, 15, 28, 0.95)",
-                            border: "1px solid rgba(255,255,255,0.08)",
+                            background: "var(--color-bg-primary)",
+                            border: "1px solid var(--color-border-glass)",
                             borderRadius: "12px",
-                            color: "#f1f5f9",
+                            color: "var(--color-text-primary)",
                             fontSize: "11px",
                             fontFamily: "var(--font-mono)",
-                            boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+                            boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
                             backdropFilter: "blur(12px)",
                         }}
+                        labelStyle={{ color: "var(--color-text-secondary)" }}
+                        itemStyle={{ color: "var(--color-text-primary)" }}
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         formatter={(value: any, _: any, props: any) => [
                             `SHAP: ${Number(value).toFixed(4)} | Value: ${Number(
