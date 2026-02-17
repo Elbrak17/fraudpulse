@@ -19,7 +19,7 @@ class TransactionStreamer:
     def __init__(self, df: pd.DataFrame, predictor):
         self.df = df
         self.predictor = predictor
-        self.feature_cols = [c for c in df.columns if c != "Class"]
+        self.feature_cols = [c for c in df.columns if c not in ("Class", "Amount_Original")]
         self.current_index = 0
         self.buffer: list[dict] = []
         self.max_buffer = 100
