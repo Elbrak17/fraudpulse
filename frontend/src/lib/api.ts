@@ -142,11 +142,11 @@ export async function* streamExplanation(id: number): AsyncGenerator<string> {
     }
 }
 
-export async function pollTransactions(sinceId: number = 0): Promise<{
+export async function pollTransactions(sinceId: number = 0, limit: number = 50): Promise<{
     transactions: StreamTransaction[];
     latest_id: number;
 }> {
-    const res = await fetch(`${API_BASE}/api/poll/transactions?since_id=${sinceId}&limit=10`);
+    const res = await fetch(`${API_BASE}/api/poll/transactions?since_id=${sinceId}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to poll transactions");
     return res.json();
 }

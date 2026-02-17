@@ -73,10 +73,13 @@ async def lifespan(app: FastAPI):
             else:
                 df = full_df
 
+            # Preserve original Amount for display (before scaling)
+            df["Amount_Original"] = df["Amount"].copy()
+
             scaler = StandardScaler()
             df["Amount"] = scaler.fit_transform(df[["Amount"]])
             df["Time"] = scaler.fit_transform(df[["Time"]])
-            feature_cols = [c for c in df.columns if c != "Class"]
+            feature_cols = [c for c in df.columns if c not in ("Class", "Amount_Original")]
             print(f"[*] Dataset loaded: {len(df)} rows (from {total_rows} total)")
         except Exception as e:
             print(f"[!] Failed to load dataset: {e}")
@@ -193,7 +196,7 @@ async def predict_transaction(transaction_id: int):
 
     return PredictionResult(
         transaction_id=transaction_id,
-        amount=float(row["Amount"]),
+        amount=float(row.get("Amount_Original", row["Amount"])),
         **pred,
     )
 
@@ -237,7 +240,7 @@ async def explain_transaction(transaction_id: int):
 
     tx_data = {
         "id": transaction_id,
-        "amount": float(row["Amount"]),
+        "amount": float(row.get("Amount_Original", row["Amount"])),
         **pred,
     }
     top5_shap = shap_data["shap_values"][:5]

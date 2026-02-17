@@ -67,11 +67,14 @@ class TransactionStreamer:
         features = row[self.feature_cols].values.astype(np.float64)
         prediction = self.predictor.predict(features)
 
+        # Use original (unscaled) amount for display; fall back to scaled if missing
+        display_amount = float(row.get("Amount_Original", row.get("Amount", 0)))
+
         tx = {
             "id": int(self.current_index),
             "df_idx": int(df_idx),
             "time": float(row.get("Time", 0)),
-            "amount": float(row.get("Amount", 0)),
+            "amount": display_amount,
             "is_fraud": int(row["Class"]),
             "risk_level": prediction["risk_level"],
             "combined_confidence": prediction["combined_confidence"],
@@ -90,7 +93,7 @@ class TransactionStreamer:
         if is_flagged:
             self.fraud_flagged += 1
         if prediction["recommendation"] == "BLOCK":
-            self.blocked_amount += abs(float(row.get("Amount", 0)))
+            self.blocked_amount += abs(display_amount)
 
         # Check prediction correctness
         predicted_fraud = 1 if is_flagged else 0
