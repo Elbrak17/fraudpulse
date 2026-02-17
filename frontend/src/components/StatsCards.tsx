@@ -17,7 +17,7 @@ function formatValue(value: number, format: string) {
         case "percent":
             return `${(value * 100).toFixed(1)}%`;
         case "currency":
-            return `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+            return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         default:
             return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
     }

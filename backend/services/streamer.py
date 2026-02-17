@@ -37,14 +37,14 @@ class TransactionStreamer:
         fraud_idx = df.index[df["Class"] == 1].tolist()
         legit_idx = df.index[df["Class"] == 0].tolist()
 
-        # Use all legit + tripled fraud for ~5% visible fraud rate
-        demo_indices = legit_idx + fraud_idx * 3
+        # Use all legit + boosted fraud for ~12% visible fraud rate
+        demo_indices = legit_idx + fraud_idx * 8
         import random as _rnd
         _rnd.seed(42)
         _rnd.shuffle(demo_indices)
         self.demo_indices = demo_indices
         print(f"[*] Streamer initialized with {len(self.demo_indices)} transaction indices "
-              f"({len(fraud_idx)*3} fraud boosted)")
+              f"({len(fraud_idx)*8} fraud boosted)")
 
     def _reset_stats(self):
         """Reset all live counters for a new cycle."""

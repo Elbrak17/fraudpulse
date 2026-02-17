@@ -68,11 +68,6 @@ function ScoreGauge({ label, value, sublabel, max, formatFn, color }: {
             <div className="h-1 bg-white/5 rounded-full overflow-hidden mt-1.5">
                 <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" }} className="h-full rounded-full bar-glow" style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}40` }} />
             </div>
-            {/* Tick marks */}
-            <div className="flex justify-between mt-1">
-                <span className="text-[8px] text-[var(--color-text-muted)]">0</span>
-                <span className="text-[8px] text-[var(--color-text-muted)]">{max === 1 ? "1.0" : max}</span>
-            </div>
         </div>
     );
 }
@@ -96,7 +91,7 @@ export default function AlertPanel({
 
     useEffect(() => {
         if (transactionId === null || dfIdx === null) return;
-        receivedAtRef.current = new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        receivedAtRef.current = new Date().toLocaleTimeString("en-US", { hour12: true, hour: "2-digit", minute: "2-digit", second: "2-digit" });
         setExplanation("");
         setIsStreaming(true);
         let cancelled = false;
@@ -196,10 +191,21 @@ export default function AlertPanel({
                 <p className="text-[9px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-[0.15em] font-medium flex items-center gap-1.5">
                     {SparkleIcon}
                     Gemini AI Explanation
+                    {isStreaming && <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse ml-1" />}
                 </p>
-                <p className={`text-xs text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-line ${isStreaming ? "typing-caret" : ""}`}>
-                    {explanation || (isStreaming ? "" : "Loading analysis...")}
-                </p>
+                {isStreaming && !explanation ? (
+                    <div className="flex items-center gap-2 py-4">
+                        <svg className="animate-spin h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        <span className="text-[11px] text-[var(--color-text-muted)]">Generating AI analysis...</span>
+                    </div>
+                ) : (
+                    <p className={`text-xs text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-line ${isStreaming ? "typing-caret" : ""}`}>
+                        {explanation || "Select a transaction to generate analysis"}
+                    </p>
+                )}
             </div>
         </motion.div>
     );

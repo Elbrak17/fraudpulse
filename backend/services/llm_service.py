@@ -98,7 +98,7 @@ async def stream_explanation(transaction_data: dict, shap_top5: list[dict]):
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
-                max_output_tokens=2048,
+                max_output_tokens=4096,
             ),
         )
         async for chunk in async_response:

@@ -71,13 +71,13 @@ class FraudPredictor:
         combined = round(combined, 4)
 
         # ── Risk Level ──
-        if combined >= 0.85:
+        if combined >= 0.70:
             risk_level = "CRITICAL"
             recommendation = "BLOCK"
-        elif combined >= 0.60:
+        elif combined >= 0.45:
             risk_level = "HIGH"
             recommendation = "BLOCK"
-        elif combined >= 0.35:
+        elif combined >= 0.25:
             risk_level = "MEDIUM"
             recommendation = "REVIEW"
         else:
