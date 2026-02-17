@@ -58,6 +58,7 @@ class StatsOut(BaseModel):
     model_accuracy: float
     blocked_amount: float
     avg_risk_score: float
+    risk_distribution: dict[str, int] = {}
 
 
 class StreamTransaction(BaseModel):

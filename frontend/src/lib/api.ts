@@ -35,6 +35,7 @@ export interface Stats {
     model_accuracy: number;
     blocked_amount: number;
     avg_risk_score: number;
+    risk_distribution?: Record<string, number>;
 }
 
 export interface ShapValue {

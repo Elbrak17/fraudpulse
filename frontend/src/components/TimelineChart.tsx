@@ -78,10 +78,6 @@ export default function TimelineChart({ transactions }: TimelineChartProps) {
                                 <stop offset="50%" stopColor="#ef4444" stopOpacity={0.08} />
                                 <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
                             </linearGradient>
-                            <linearGradient id="alertGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.2} />
-                                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
-                            </linearGradient>
                         </defs>
                         <CartesianGrid
                             strokeDasharray="3 3"
@@ -115,15 +111,6 @@ export default function TimelineChart({ transactions }: TimelineChartProps) {
                             }}
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             formatter={(value: any) => [`${value}%`, "Avg Risk"]}
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey="alerts"
-                            stroke="#f59e0b"
-                            strokeWidth={1.5}
-                            fill="url(#alertGradient)"
-                            dot={false}
-                            strokeOpacity={0.6}
                         />
                         <Area
                             type="monotone"

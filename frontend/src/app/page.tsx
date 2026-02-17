@@ -264,7 +264,7 @@ export default function DashboardPage() {
             />
           </div>
           <div className="flex-shrink-0">
-            <RiskDistribution transactions={recentTransactions} />
+            <RiskDistribution stats={stats} />
           </div>
         </div>
 

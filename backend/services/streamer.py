@@ -31,6 +31,7 @@ class TransactionStreamer:
         self.blocked_amount = 0.0
         self.correct_predictions = 0
         self._risk_score_sum = 0.0
+        self.risk_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
 
         # Build demo pool: ALL rows with fraud boosted ×3 for visibility
         fraud_idx = df.index[df["Class"] == 1].tolist()
@@ -52,6 +53,7 @@ class TransactionStreamer:
         self.blocked_amount = 0.0
         self.correct_predictions = 0
         self._risk_score_sum = 0.0
+        self.risk_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
         self.buffer.clear()
         print("[*] Streamer cycle complete — stats reset to 0")
 
@@ -95,6 +97,11 @@ class TransactionStreamer:
         if prediction["recommendation"] == "BLOCK":
             self.blocked_amount += abs(display_amount)
 
+        # Track risk distribution
+        rl = prediction["risk_level"]
+        if rl in self.risk_counts:
+            self.risk_counts[rl] += 1
+
         # Check prediction correctness
         predicted_fraud = 1 if is_flagged else 0
         actual = int(row["Class"])
@@ -127,6 +134,7 @@ class TransactionStreamer:
             "model_accuracy": round(self.correct_predictions / total, 4),
             "blocked_amount": round(self.blocked_amount, 2),
             "avg_risk_score": round(self._risk_score_sum / total, 4),
+            "risk_distribution": dict(self.risk_counts),
         }
 
     def get_buffered(self, since_id: int = 0, limit: int = 20) -> list[dict]:

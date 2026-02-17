@@ -188,7 +188,7 @@ export default function AlertPanel({
             {/* Dual Model Scores */}
             <div className="grid grid-cols-2 gap-2.5 mb-3 flex-shrink-0">
                 <ScoreGauge label="Isolation Forest" value={ifScore ?? 0} sublabel={ifLabel} max={1} formatFn={(v) => `${(v * 100).toFixed(1)}%`} color={riskColor} />
-                <ScoreGauge label="Autoencoder Error" value={aeScore ?? 0} sublabel={aeLabel} max={1} formatFn={(v) => v.toFixed(4)} color="#8b5cf6" />
+                <ScoreGauge label="Autoencoder Error" value={aeScore ?? 0} sublabel={aeLabel} max={Math.max(1, Math.ceil((aeScore ?? 0) * 2) / 2)} formatFn={(v) => v.toFixed(4)} color="#8b5cf6" />
             </div>
 
             {/* LLM Explanation */}

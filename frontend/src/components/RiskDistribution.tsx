@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
-import { StreamTransaction } from "@/lib/api";
+import { Stats } from "@/lib/api";
 import { useMemo } from "react";
 
 interface RiskDistributionProps {
-    transactions: StreamTransaction[];
+    stats: Stats | null;
 }
 
 const RISK_CONFIG = [
@@ -23,22 +23,17 @@ const PieIcon = (
     </svg>
 );
 
-export default function RiskDistribution({ transactions }: RiskDistributionProps) {
+export default function RiskDistribution({ stats }: RiskDistributionProps) {
+    const dist = stats?.risk_distribution ?? {};
+    const total = stats?.total_transactions ?? 0;
+
     const data = useMemo(() => {
-        const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
-        for (const tx of transactions) {
-            if (tx.risk_level in counts) {
-                counts[tx.risk_level as keyof typeof counts]++;
-            }
-        }
         return RISK_CONFIG.map((r) => ({
             name: r.label,
-            value: counts[r.key as keyof typeof counts],
+            value: dist[r.key] ?? 0,
             color: r.color,
         })).filter((d) => d.value > 0);
-    }, [transactions]);
-
-    const total = transactions.length;
+    }, [dist]);
 
     return (
         <motion.div
@@ -76,7 +71,7 @@ export default function RiskDistribution({ transactions }: RiskDistributionProps
 
                 <div className="flex-1 space-y-2.5">
                     {RISK_CONFIG.map((r, rIdx) => {
-                        const count = transactions.filter((t) => t.risk_level === r.key).length;
+                        const count = dist[r.key] ?? 0;
                         const pct = total > 0 ? (count / total) * 100 : 0;
                         return (
                             <div key={r.key} className="space-y-1 group/legend cursor-default">
