@@ -52,7 +52,7 @@ function StatCard({
                     <p className="text-[10px] text-[var(--color-text-muted)] mb-2 uppercase tracking-[0.12em] font-medium">
                         {title}
                     </p>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                    <p className="text-lg sm:text-2xl font-bold text-[var(--color-text-primary)]">
                         <span className="stat-number animate-count-in">{formatValue(value, format)}</span>
                     </p>
                 </div>
